@@ -230,7 +230,9 @@
 <script>
   // >>>>>> IMPOSTA QUI IL TUO WORKER <<<<<<
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
-  // la chiave la metti nel Worker come variabile (X-Reserve-Key). Nel form NON la metti.
+
+  // >>>>>> METTI QUI LA KEY PUBBLICA (PUBLIC_BOOK_KEY) <<<<<<
+  const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
 
   const elNome = document.getElementById('nome');
   const elData = document.getElementById('data');
@@ -277,19 +279,19 @@
     return yyyy_mm_dd ? yyyy_mm_dd.split('-').reverse().join('/') : '';
   }
 
-  // Limiti “soft” per consigliare chiamata (non blocca per forza: blocca solo quando supera quello che gestiamo online)
   function maxOnlineForArea(area){
-    // regole concordate:
-    // - piano principale fino a 10 (unendo 2+2+2+4)
-    // - soppalco fino a 12 (2+4+6)
     return area === 'loft' ? 12 : 10;
   }
 
+  // ✅ QUI È LA MODIFICA IMPORTANTE: aggiunge X-Reserve-Key
   async function postBooking(payload){
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Reserve-Key': PUBLIC_BOOK_KEY
+      },
       body: JSON.stringify(payload),
     });
     const data = await res.json().catch(()=> ({}));
@@ -312,7 +314,6 @@
 
       const dataIT = formatDateIT(dataVal);
 
-      // validazioni base
       if(!nome || !dataVal || !oraVal || !area || !personeN){
         openPopup("Compila tutti i campi obbligatori.", true);
         return;
@@ -330,10 +331,10 @@
       }
 
       const payload = {
-        area,                 // "main" | "loft"
+        area,
         nome,
-        data: dataVal,        // YYYY-MM-DD
-        ora: oraVal,          // HH:MM
+        data: dataVal,
+        ora: oraVal,
         persone: personeN,
         telefono: elTel.value.trim(),
         email: elMail.value.trim(),
@@ -343,44 +344,12 @@
       const { ok, data } = await postBooking(payload);
 
       if(!ok || !data || data.ok !== true){
-        const code = (data && data.code) ? String(data.code) : "ERROR";
-
-        if(code === "FULL"){
-          openPopup(
-            `Ci dispiace, per <b>${dataIT}</b> alle <b>${oraVal}</b> non c’è disponibilità per <b>${personeN}</b> persone in <b>${area === 'loft' ? 'Soppalco' : 'Piano principale'}</b>.<br><br>
-             Prova un altro orario oppure contattaci:<br><b>Telefono: 3333367566</b>`,
-            true
-          );
-          return;
-        }
-
-        if(code === "CLOSED"){
-          openPopup(
-            `Ci dispiace, l’orario selezionato non è prenotabile.<br>
-             Orari prenotabili: <b>18:00 – 01:00</b> (ogni 15 minuti).`,
-            true
-          );
-          return;
-        }
-
-        if(code === "TOO_LARGE"){
-          openPopup(
-            `Per gruppi numerosi preferiamo sentirci direttamente.<br>
-             Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
-             <b>Telefono: 3333367566</b>`,
-            true
-          );
-          return;
-        }
-
         openPopup("Errore durante l’invio. Riprova tra poco.", true);
         return;
       }
 
-      // status breve
       elStatus.textContent = "Prenotazione inviata correttamente riceverai la conferma a breve.";
 
-      // popup conferma (come richiesto)
       openPopup(
         `Ciao ${nome}, ti confermiamo la tua prenotazione per ${personeN} persone,
          ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b> e ti ricordiamo che il tavolo viene riservato
