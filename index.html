@@ -6,10 +6,7 @@
   <title>Prenotazione - Eleven Cocktail Bar</title>
 
   <style>
-    :root{
-      --gold:#f6bf1a;
-      --txt:#ffffff;
-    }
+    :root{ --gold:#f6bf1a; --txt:#ffffff; }
 
     html, body{
       margin:0;
@@ -18,12 +15,7 @@
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
-    .wrap{
-      max-width:720px;
-      margin:0 auto;
-      padding:24px;
-      background: transparent;
-    }
+    .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
 
     .card{
       background: rgba(0,0,0,.55);
@@ -35,37 +27,14 @@
       -webkit-backdrop-filter: blur(10px);
     }
 
-    h1{
-      margin:0 0 10px;
-      font-size:22px;
-      font-weight:900;
-      color:#fff;
-    }
-
-    p{
-      margin:0 0 18px;
-      color:#fff;
-      opacity:.95;
-    }
-
+    h1{ margin:0 0 10px; font-size:22px; font-weight:900; color:#fff; }
+    p{ margin:0 0 18px; color:#fff; opacity:.95; }
     b{ color: var(--gold); }
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    label{ display:block; font-size:13px; margin-bottom:6px; color:#fff; }
 
-    label{
-      display:block;
-      font-size:13px;
-      margin-bottom:6px;
-      color:#fff;
-    }
-
-    input,
-    textarea,
-    select{
+    input, textarea, select{
       width:100%;
       box-sizing:border-box;
       display:block;
@@ -94,8 +63,7 @@
       line-height:22px;
     }
 
-    input[type="date"],
-    input[type="time"]{
+    input[type="date"], input[type="time"]{
       padding:12px;
       min-height:48px;
       height:48px;
@@ -108,18 +76,9 @@
       cursor:pointer;
     }
 
-    input[type="date"]::-webkit-datetime-edit,
-    input[type="time"]::-webkit-datetime-edit{
-      padding:0;
-    }
+    ::placeholder{ color:rgba(255,255,255,.7); }
 
-    ::placeholder{
-      color:rgba(255,255,255,.7);
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus{
+    input:focus, textarea:focus, select:focus{
       border-color: var(--gold);
       box-shadow: 0 0 0 3px rgba(246,191,26,.25);
     }
@@ -135,20 +94,13 @@
       font-weight:900;
       cursor:pointer;
     }
-
-    .btn:hover{
-      background: rgba(246,191,26,.35);
-    }
-
-    .btn[disabled]{
-      opacity:.6;
-      cursor:not-allowed;
-    }
+    .btn:hover{ background: rgba(246,191,26,.35); }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
 
     .row{
       display:flex;
       gap:12px;
-      align-items:flex-start;
+      align-items:center;
       justify-content:space-between;
       margin-top:14px;
     }
@@ -156,8 +108,8 @@
     .status{
       font-size:13px;
       color:#fff;
-      white-space:pre-line; /* mostra correttamente le nuove righe */
       max-width:420px;
+      text-align:right;
     }
 
     .ok{ color:#7ee787; }
@@ -166,7 +118,62 @@
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
       .row{ flex-direction:column; align-items:stretch; }
-      .status{ max-width:100%; }
+      .status{ max-width:100%; text-align:left; }
+    }
+
+    /* ===== POPUP (MODAL) ===== */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 9999;
+    }
+    .modal{
+      width: min(560px, 100%);
+      background: rgba(0,0,0,.85);
+      border: 1px solid rgba(255,255,255,.18);
+      border-left: 6px solid var(--gold);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+    }
+    .modal h2{
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: .5px;
+    }
+    .modal .text{
+      white-space: pre-line;
+      line-height: 1.45;
+      opacity: .98;
+      font-size: 14px;
+    }
+    .modal .actions{
+      margin-top: 14px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal .btn-close{
+      padding: 10px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .modal .btn-close:hover{
+      background: rgba(255,255,255,.14);
     }
   </style>
 </head>
@@ -230,8 +237,19 @@
     </div>
   </div>
 
+  <!-- POPUP -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <h2 id="modalTitle">Prenotazione inviata</h2>
+      <div id="modalText" class="text"></div>
+      <div class="actions">
+        <button id="btnCloseModal" class="btn-close" type="button">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // ✅ NTFY: topic prenotazioni (quello "booking", NON sync)
+    // ✅ NTFY: topic prenotazioni (booking)
     const NTFY_SERVER = "https://ntfy.sh";
     const NTFY_TOPIC  = "prenotazioni-eleven-cocktail-bar";
 
@@ -239,13 +257,35 @@
     const status = document.getElementById("status");
     const btn    = document.getElementById("btnSend");
 
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const modalText = document.getElementById("modalText");
+    const btnCloseModal = document.getElementById("btnCloseModal");
+
     function setStatus(text, ok){
       status.textContent = text || "";
       status.className = "status " + (ok ? "ok" : "err");
     }
 
+    function openModal(text){
+      modalText.textContent = text;
+      modalBackdrop.style.display = "flex";
+      setTimeout(() => btnCloseModal.focus(), 0);
+    }
+
+    function closeModal(){
+      modalBackdrop.style.display = "none";
+    }
+
+    btnCloseModal.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modalBackdrop.style.display === "flex") closeModal();
+    });
+
     form.addEventListener("submit", async (e) => {
-      e.preventDefault(); // ✅ evita refresh/submit standard
+      e.preventDefault();
       setStatus("", true);
 
       const nome = document.getElementById("in_nome").value.trim();
@@ -261,7 +301,6 @@
         return;
       }
 
-      // Messaggio compatibile col gestionale (parser)
       const msg =
 `Nome: ${nome}
 Data: ${data}
@@ -277,10 +316,7 @@ ${note ? "Note: " + note : ""}`.trim();
       try{
         const r = await fetch(`${NTFY_SERVER}/${NTFY_TOPIC}`, {
           method: "POST",
-          headers: {
-            "Title": "Nuova prenotazione",
-            "Priority": "5"
-          },
+          headers: { "Title": "Nuova prenotazione", "Priority": "5" },
           body: msg
         });
 
@@ -289,16 +325,19 @@ ${note ? "Note: " + note : ""}`.trim();
           throw new Error("Errore invio (" + r.status + "): " + t);
         }
 
-        // Data in formato italiano GG/MM/AAAA per la conferma
+        // Data in IT (GG/MM/AAAA)
         let dataIT = data;
         try{
           if (data && data.includes("-")) {
             const [yy, mm, dd] = data.split("-");
             dataIT = `${dd}/${mm}/${yy}`;
           }
-        }catch(e){ /* ignore */ }
+        }catch(e){}
 
-        // ✅ Messaggio di conferma richiesto
+        // ✅ Status corto (in basso a destra)
+        setStatus("Prenotazione inviata correttamente riceverai la conferma a breve.", true);
+
+        // ✅ Popup con testo completo
         const confirmText =
 `Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone, ti aspettiamo il ${dataIT} alle ${ora} e ti ricordiamo che il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
 
@@ -307,7 +346,7 @@ Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad 
 Buona giornata,
 Manuel.`;
 
-        setStatus(confirmText, true);
+        openModal(confirmText);
 
         // reset SOLO dopo successo
         form.reset();
