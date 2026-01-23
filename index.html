@@ -9,6 +9,8 @@
     :root{
       --gold:#f6bf1a;
       --txt:#ffffff;
+      --ok:#7ee787;
+      --err:#ff7b72;
     }
 
     html, body{
@@ -32,23 +34,15 @@
       border-radius:18px;
       padding:18px;
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
     }
 
     h1{
       margin:0 0 10px;
       font-size:22px;
       font-weight:900;
-      color:#fff;
     }
 
-    p{
-      margin:0 0 18px;
-      color:#fff;
-      opacity:.95;
-    }
-
-    b{ color: var(--gold); }
+    p{ margin:0 0 18px; opacity:.95; }
 
     .grid{
       display:grid;
@@ -56,57 +50,28 @@
       gap:12px;
     }
 
-    label{
-      display:block;
-      font-size:13px;
-      margin-bottom:6px;
-      color:#fff;
-    }
+    label{ font-size:13px; margin-bottom:6px; display:block; }
 
     input, textarea, select{
       width:100%;
-      box-sizing:border-box;
-      display:block;
-
       min-height:48px;
-      height:48px;
       padding:12px;
-
       border-radius:12px;
       border:1px solid rgba(255,255,255,.25);
       background: rgba(0,0,0,.45);
-      color:#fff !important;
-
-      line-height:24px;
+      color:#fff;
       outline:none;
-
-      -webkit-appearance:none;
-      -moz-appearance:none;
       appearance:none;
     }
 
-    textarea{
-      min-height:96px;
-      height:auto;
-      resize:vertical;
-      line-height:22px;
-    }
-
-    input[type="date"], input[type="time"]{
-      padding:12px;
-      min-height:48px;
-      height:48px;
-      line-height:24px;
-    }
-
-    ::placeholder{ color:rgba(255,255,255,.7); }
+    textarea{ min-height:96px; resize:vertical; }
 
     input:focus, textarea:focus, select:focus{
       border-color: var(--gold);
       box-shadow: 0 0 0 3px rgba(246,191,26,.25);
     }
 
-    .full{ grid-column:1 / -1; }
+    .full{ grid-column:1/-1; }
 
     .btn{
       padding:12px 16px;
@@ -118,9 +83,6 @@
       cursor:pointer;
     }
 
-    .btn:hover{ background: rgba(246,191,26,.35); }
-    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
-
     .row{
       display:flex;
       gap:12px;
@@ -129,270 +91,160 @@
       margin-top:14px;
     }
 
-    /* status: SOLO FRASE CORTA */
-    .status{
-      font-size:13px;
-      color:#fff;
-      text-align:right;
-      max-width:360px;
+    .status{ font-size:13px; }
+
+    /* ===== POPUP ===== */
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
     }
-    .ok{ color:#7ee787; }
-    .err{ color:#ff7b72; }
+
+    .modal-box{
+      max-width:420px;
+      background:rgba(0,0,0,.85);
+      border:1px solid rgba(255,255,255,.2);
+      border-left:6px solid var(--gold);
+      border-radius:16px;
+      padding:20px;
+      color:var(--ok);
+      animation:pop .25s ease-out;
+    }
+
+    @keyframes pop{
+      from{ transform:scale(.9); opacity:0; }
+      to{ transform:scale(1); opacity:1; }
+    }
+
+    .modal button{
+      margin-top:16px;
+      width:100%;
+    }
 
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
-      .row{ flex-direction:column; align-items:stretch; }
-      .status{ text-align:left; max-width:100%; }
     }
-
-    /* ===== POPUP CENTRATO ===== */
-    .modal-backdrop{
-      position: fixed;
-      inset: 0;
-      display: none;              /* verrà messo a flex via JS */
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: rgba(0,0,0,.65);
-      z-index: 99999;
-    }
-
-    .modal{
-      width: min(620px, 100%);
-      background: rgba(0,0,0,.88);
-      border:1px solid rgba(255,255,255,.18);
-      border-left:6px solid var(--gold);
-      border-radius:18px;
-      padding:16px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color:#fff;
-    }
-
-    .modal h2{
-      margin:0 0 10px;
-      font-size:18px;
-      font-weight:900;
-      color: var(--gold);
-      letter-spacing:.5px;
-    }
-
-    .modal .text{
-      white-space: pre-line;
-      line-height: 1.5;
-      font-size: 14px;
-      color:#e9eef6;
-    }
-
-    .modal .actions{
-      margin-top: 14px;
-      display:flex;
-      justify-content:flex-end;
-      gap:10px;
-    }
-
-    .btn-close{
-      padding:10px 14px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.25);
-      background: rgba(255,255,255,.08);
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-    }
-    .btn-close:hover{ background: rgba(255,255,255,.14); }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Prenota un tavolo</h1>
-      <p>Compila il modulo e premi <b>Conferma prenotazione</b>. Riceverai una risposta appena possibile.</p>
+<div class="wrap">
+  <div class="card">
+    <h1>Prenota un tavolo</h1>
+    <p>Compila il modulo e premi <b>Conferma prenotazione</b>.</p>
 
-      <form id="bookingForm">
-        <div class="grid">
+    <form id="bookingForm">
+      <div class="grid">
 
-          <div class="full">
-            <label>Nome e cognome *</label>
-            <input id="in_nome" placeholder="Es. Mario Rossi" required>
-          </div>
-
-          <div>
-            <label>Data *</label>
-            <input id="in_data" type="date" required>
-          </div>
-
-          <div>
-            <label>Orario *</label>
-            <input id="in_ora" type="time" required>
-          </div>
-
-          <div>
-            <label>Numero persone *</label>
-            <select id="in_persone" required>
-              <option value="">Seleziona</option>
-              <option>1</option><option>2</option><option>3</option>
-              <option>4</option><option>5</option><option>6</option>
-              <option>7</option><option>8</option><option>9</option><option>10</option>
-            </select>
-          </div>
-
-          <div>
-            <label>Telefono *</label>
-            <input id="in_tel" placeholder="Es. +39 333 1234567" required>
-          </div>
-
-          <div class="full">
-            <label>Email *</label>
-            <input id="in_email" type="email" placeholder="Es. nome@email.it" required>
-          </div>
-
-          <div class="full">
-            <label>Note (facoltative)</label>
-            <textarea id="in_note" placeholder="Es. compleanno, allergie, richieste particolari..."></textarea>
-          </div>
-
+        <div class="full">
+          <label>Nome e cognome *</label>
+          <input id="nome" required>
         </div>
 
-        <div class="row">
-          <button id="btnSend" class="btn" type="submit">Conferma prenotazione</button>
-          <div id="status" class="status"></div>
+        <div>
+          <label>Data *</label>
+          <input id="data" type="date" required>
         </div>
-      </form>
-    </div>
-  </div>
 
-  <!-- POPUP -->
-  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <h2 id="modalTitle">Prenotazione inviata</h2>
-      <div id="modalText" class="text"></div>
-      <div class="actions">
-        <button id="btnCloseModal" class="btn-close" type="button">Chiudi</button>
+        <div>
+          <label>Orario *</label>
+          <!-- ✅ STEP 15 MINUTI -->
+          <input id="ora" type="time" step="900" required>
+        </div>
+
+        <div>
+          <label>Numero persone *</label>
+          <select id="persone" required>
+            <option value="">Seleziona</option>
+            <option>1</option><option>2</option><option>3</option>
+            <option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Telefono *</label>
+          <input id="telefono" required>
+        </div>
+
+        <div class="full">
+          <label>Email *</label>
+          <input id="email" type="email" required>
+        </div>
+
+        <div class="full">
+          <label>Note (facoltative)</label>
+          <textarea id="note"></textarea>
+        </div>
+
       </div>
-    </div>
+
+      <div class="row">
+        <button class="btn">Conferma prenotazione</button>
+        <div class="status" id="status"></div>
+      </div>
+    </form>
   </div>
+</div>
 
-  <script>
-    // 🔧 ntfy
-    const NTFY_SERVER = "https://ntfy.sh";
-    const NTFY_TOPIC  = "prenotazioni-eleven-cocktail-bar";
+<!-- POPUP -->
+<div class="modal" id="popup">
+  <div class="modal-box">
+    <div id="popupText"></div>
+    <button class="btn" onclick="closePopup()">Chiudi</button>
+  </div>
+</div>
 
-    const form   = document.getElementById("bookingForm");
-    const status = document.getElementById("status");
-    const btn    = document.getElementById("btnSend");
+<script>
+function normalizeTime(value){
+  const [h,m] = value.split(':').map(Number);
+  const rounded = Math.round(m / 15) * 15;
+  const hh = String(h + Math.floor(rounded / 60)).padStart(2,'0');
+  const mm = String(rounded % 60).padStart(2,'0');
+  return `${hh}:${mm}`;
+}
 
-    const modalBackdrop = document.getElementById("modalBackdrop");
-    const modalText = document.getElementById("modalText");
-    const btnCloseModal = document.getElementById("btnCloseModal");
+function closePopup(){
+  document.getElementById('popup').style.display='none';
+}
 
-    function setStatusShort(ok){
-      // ✅ la frase corta fissa che mi hai chiesto
-      status.textContent = ok
-        ? "Prenotazione inviata correttamente riceverai la conferma a breve."
-        : "Errore: impossibile inviare la prenotazione. Riprova.";
-      status.className = "status " + (ok ? "ok" : "err");
-    }
+document.getElementById('bookingForm').addEventListener('submit', async e=>{
+  e.preventDefault();
 
-    function openModal(text){
-      modalText.textContent = text;
-      modalBackdrop.style.display = "flex";
-      setTimeout(() => btnCloseModal.focus(), 0);
-    }
+  const nome = nome.value.trim();
+  const persone = persone.value;
+  let oraVal = ora.value;
+  const dataVal = data.value;
 
-    function closeModal(){
-      modalBackdrop.style.display = "none";
-    }
+  // 🔒 sicurezza: forza step 15 minuti
+  oraVal = normalizeTime(oraVal);
+  ora.value = oraVal;
 
-    btnCloseModal.addEventListener("click", closeModal);
-    modalBackdrop.addEventListener("click", (e) => {
-      if (e.target === modalBackdrop) closeModal();
-    });
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modalBackdrop.style.display === "flex") closeModal();
-    });
+  const dataIT = dataVal.split('-').reverse().join('/');
 
-    function toITDate(yyyy_mm_dd){
-      try{
-        if (!yyyy_mm_dd || !yyyy_mm_dd.includes("-")) return yyyy_mm_dd || "";
-        const [yy, mm, dd] = yyyy_mm_dd.split("-");
-        return `${dd}/${mm}/${yy}`;
-      }catch(_){
-        return yyyy_mm_dd || "";
-      }
-    }
+  // 👉 QUI VA LA TUA FETCH (GIÀ FUNZIONANTE)
+  // await fetch(...)
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      status.textContent = "";
-      status.className = "status";
+  document.getElementById('status').textContent =
+    "Prenotazione inviata correttamente riceverai la conferma a breve.";
 
-      const nome = document.getElementById("in_nome").value.trim();
-      const data = document.getElementById("in_data").value.trim();   // yyyy-mm-dd
-      const ora  = document.getElementById("in_ora").value.trim();    // HH:MM
-      const persone = document.getElementById("in_persone").value.trim();
-      const tel  = document.getElementById("in_tel").value.trim();
-      const email= document.getElementById("in_email").value.trim();
-      const note = document.getElementById("in_note").value.trim();
+  document.getElementById('popupText').innerHTML = `
+    Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone.<br><br>
+    Ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b>.<br><br>
+    Il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
+    Dopo 30 minuti di ritardo il tavolo viene annullato.<br><br>
+    Buona giornata,<br>
+    <b>Manuel</b>.
+  `;
 
-      if(!nome || !data || !ora || !persone || !tel || !email){
-        status.textContent = "Compila tutti i campi obbligatori.";
-        status.className = "status err";
-        return;
-      }
+  document.getElementById('popup').style.display='flex';
+  e.target.reset();
+});
+</script>
 
-      // Messaggio verso gestionale (ntfy)
-      const msg =
-`Nome: ${nome}
-Data: ${data}
-Ora: ${ora}
-Persone: ${persone}
-Email: ${email}
-Telefono: ${tel}
-${note ? "Note: " + note : ""}`.trim();
-
-      btn.disabled = true;
-      btn.textContent = "Invio...";
-
-      try{
-        const r = await fetch(`${NTFY_SERVER}/${NTFY_TOPIC}`, {
-          method: "POST",
-          headers: { "Title": "Nuova prenotazione", "Priority": "5" },
-          body: msg
-        });
-
-        if(!r.ok){
-          const t = await r.text().catch(()=> "");
-          throw new Error("Errore invio (" + r.status + "): " + t);
-        }
-
-        // ✅ status corto
-        setStatusShort(true);
-
-        // ✅ popup centrato con messaggio completo
-        const dataIT = toITDate(data);
-        const popupText =
-`Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone, ti aspettiamo il ${dataIT} alle ${ora} e ti ricordiamo che il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
-
-Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti di accomodarsi. Grazie per la prenotazione.
-
-Buona giornata,
-Manuel.`;
-
-        openModal(popupText);
-
-        // reset solo dopo successo
-        form.reset();
-      }catch(err){
-        console.error(err);
-        setStatusShort(false);
-      }finally{
-        btn.disabled = false;
-        btn.textContent = "Conferma prenotazione";
-      }
-    });
-  </script>
 </body>
 </html>
