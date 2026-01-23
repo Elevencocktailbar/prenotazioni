@@ -6,7 +6,10 @@
   <title>Prenotazione - Eleven Cocktail Bar</title>
 
   <style>
-    :root{ --gold:#f6bf1a; --txt:#ffffff; }
+    :root{
+      --gold:#f6bf1a;
+      --txt:#ffffff;
+    }
 
     html, body{
       margin:0;
@@ -15,7 +18,12 @@
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
-    .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:24px;
+      background: transparent;
+    }
 
     .card{
       background: rgba(0,0,0,.55);
@@ -27,12 +35,33 @@
       -webkit-backdrop-filter: blur(10px);
     }
 
-    h1{ margin:0 0 10px; font-size:22px; font-weight:900; color:#fff; }
-    p{ margin:0 0 18px; color:#fff; opacity:.95; }
+    h1{
+      margin:0 0 10px;
+      font-size:22px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    p{
+      margin:0 0 18px;
+      color:#fff;
+      opacity:.95;
+    }
+
     b{ color: var(--gold); }
 
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    label{ display:block; font-size:13px; margin-bottom:6px; color:#fff; }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      color:#fff;
+    }
 
     input, textarea, select{
       width:100%;
@@ -70,12 +99,6 @@
       line-height:24px;
     }
 
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator{
-      opacity:.85;
-      cursor:pointer;
-    }
-
     ::placeholder{ color:rgba(255,255,255,.7); }
 
     input:focus, textarea:focus, select:focus{
@@ -94,6 +117,7 @@
       font-weight:900;
       cursor:pointer;
     }
+
     .btn:hover{ background: rgba(246,191,26,.35); }
     .btn[disabled]{ opacity:.6; cursor:not-allowed; }
 
@@ -105,76 +129,79 @@
       margin-top:14px;
     }
 
+    /* status: SOLO FRASE CORTA */
     .status{
       font-size:13px;
       color:#fff;
-      max-width:420px;
       text-align:right;
+      max-width:360px;
     }
-
     .ok{ color:#7ee787; }
     .err{ color:#ff7b72; }
 
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
       .row{ flex-direction:column; align-items:stretch; }
-      .status{ max-width:100%; text-align:left; }
+      .status{ text-align:left; max-width:100%; }
     }
 
-    /* ===== POPUP (MODAL) ===== */
+    /* ===== POPUP CENTRATO ===== */
     .modal-backdrop{
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.6);
-      display: none;
+      display: none;              /* verrà messo a flex via JS */
       align-items: center;
       justify-content: center;
       padding: 18px;
-      z-index: 9999;
+      background: rgba(0,0,0,.65);
+      z-index: 99999;
     }
+
     .modal{
-      width: min(560px, 100%);
-      background: rgba(0,0,0,.85);
-      border: 1px solid rgba(255,255,255,.18);
-      border-left: 6px solid var(--gold);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.5);
+      width: min(620px, 100%);
+      background: rgba(0,0,0,.88);
+      border:1px solid rgba(255,255,255,.18);
+      border-left:6px solid var(--gold);
+      border-radius:18px;
+      padding:16px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      color: #fff;
+      color:#fff;
     }
+
     .modal h2{
-      margin: 0 0 10px;
-      font-size: 18px;
-      font-weight: 900;
+      margin:0 0 10px;
+      font-size:18px;
+      font-weight:900;
       color: var(--gold);
-      letter-spacing: .5px;
+      letter-spacing:.5px;
     }
+
     .modal .text{
       white-space: pre-line;
-      line-height: 1.45;
-      opacity: .98;
+      line-height: 1.5;
       font-size: 14px;
+      color:#e9eef6;
     }
+
     .modal .actions{
       margin-top: 14px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
     }
-    .modal .btn-close{
-      padding: 10px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.25);
+
+    .btn-close{
+      padding:10px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.25);
       background: rgba(255,255,255,.08);
-      color: #fff;
-      font-weight: 800;
-      cursor: pointer;
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
     }
-    .modal .btn-close:hover{
-      background: rgba(255,255,255,.14);
-    }
+    .btn-close:hover{ background: rgba(255,255,255,.14); }
   </style>
 </head>
 
@@ -249,7 +276,7 @@
   </div>
 
   <script>
-    // ✅ NTFY: topic prenotazioni (booking)
+    // 🔧 ntfy
     const NTFY_SERVER = "https://ntfy.sh";
     const NTFY_TOPIC  = "prenotazioni-eleven-cocktail-bar";
 
@@ -261,8 +288,11 @@
     const modalText = document.getElementById("modalText");
     const btnCloseModal = document.getElementById("btnCloseModal");
 
-    function setStatus(text, ok){
-      status.textContent = text || "";
+    function setStatusShort(ok){
+      // ✅ la frase corta fissa che mi hai chiesto
+      status.textContent = ok
+        ? "Prenotazione inviata correttamente riceverai la conferma a breve."
+        : "Errore: impossibile inviare la prenotazione. Riprova.";
       status.className = "status " + (ok ? "ok" : "err");
     }
 
@@ -284,9 +314,20 @@
       if (e.key === "Escape" && modalBackdrop.style.display === "flex") closeModal();
     });
 
+    function toITDate(yyyy_mm_dd){
+      try{
+        if (!yyyy_mm_dd || !yyyy_mm_dd.includes("-")) return yyyy_mm_dd || "";
+        const [yy, mm, dd] = yyyy_mm_dd.split("-");
+        return `${dd}/${mm}/${yy}`;
+      }catch(_){
+        return yyyy_mm_dd || "";
+      }
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      setStatus("", true);
+      status.textContent = "";
+      status.className = "status";
 
       const nome = document.getElementById("in_nome").value.trim();
       const data = document.getElementById("in_data").value.trim();   // yyyy-mm-dd
@@ -297,10 +338,12 @@
       const note = document.getElementById("in_note").value.trim();
 
       if(!nome || !data || !ora || !persone || !tel || !email){
-        setStatus("Compila tutti i campi obbligatori.", false);
+        status.textContent = "Compila tutti i campi obbligatori.";
+        status.className = "status err";
         return;
       }
 
+      // Messaggio verso gestionale (ntfy)
       const msg =
 `Nome: ${nome}
 Data: ${data}
@@ -325,20 +368,12 @@ ${note ? "Note: " + note : ""}`.trim();
           throw new Error("Errore invio (" + r.status + "): " + t);
         }
 
-        // Data in IT (GG/MM/AAAA)
-        let dataIT = data;
-        try{
-          if (data && data.includes("-")) {
-            const [yy, mm, dd] = data.split("-");
-            dataIT = `${dd}/${mm}/${yy}`;
-          }
-        }catch(e){}
+        // ✅ status corto
+        setStatusShort(true);
 
-        // ✅ Status corto (in basso a destra)
-        setStatus("Prenotazione inviata correttamente riceverai la conferma a breve.", true);
-
-        // ✅ Popup con testo completo
-        const confirmText =
+        // ✅ popup centrato con messaggio completo
+        const dataIT = toITDate(data);
+        const popupText =
 `Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone, ti aspettiamo il ${dataIT} alle ${ora} e ti ricordiamo che il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
 
 Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti di accomodarsi. Grazie per la prenotazione.
@@ -346,13 +381,13 @@ Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad 
 Buona giornata,
 Manuel.`;
 
-        openModal(confirmText);
+        openModal(popupText);
 
-        // reset SOLO dopo successo
+        // reset solo dopo successo
         form.reset();
       }catch(err){
         console.error(err);
-        setStatus("Errore: impossibile inviare la prenotazione. Riprova.", false);
+        setStatusShort(false);
       }finally{
         btn.disabled = false;
         btn.textContent = "Conferma prenotazione";
