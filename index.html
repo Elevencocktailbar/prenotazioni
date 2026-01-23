@@ -4,47 +4,79 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Prenotazione - Eleven Cocktail Bar</title>
+
+    <!-- Font come nel menu (solo se vuoi coerenza sui titoli) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+
     <style>
       :root {
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
         color-scheme: dark;
+
+        /* tema gold come menu */
+        --gold: #f6bf1a;
+        --txt: #eef2f7;
       }
+
+      /* ✅ IMPORTANTISSIMO: sfondo trasparente per evitare “doppio sfondo” nell’iframe */
+      html, body {
+        background: transparent !important;
+      }
+
       body {
         margin: 0;
-        background: #0b0f14;
-        color: #eef2f7;
+        background: transparent !important; /* era #0b0f14 */
+        color: var(--txt);
       }
+
       .wrap {
         max-width: 720px;
         margin: 0 auto;
         padding: 24px;
       }
+
+      /* ✅ card vetro + bordo oro come nel menu */
       .card {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(0, 0, 0, 0.55);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 16px;
+        border-left: 6px solid var(--gold);
+        border-radius: 18px;
         padding: 18px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
       }
+
       h1 {
         margin: 0 0 10px;
         font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 0.3px;
       }
+
       p {
         margin: 0 0 18px;
         opacity: 0.9;
       }
+
+      /* accent oro solo dove serve */
+      b { color: var(--gold); }
+
       .grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
+
       label {
         display: block;
         font-size: 13px;
         opacity: 0.9;
         margin: 0 0 6px;
       }
+
       input,
       textarea,
       select {
@@ -53,22 +85,28 @@
         padding: 10px 12px;
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(0, 0, 0, 0.25);
-        color: #eef2f7;
+        background: rgba(0, 0, 0, 0.35);
+        color: var(--txt);
         outline: none;
       }
+
+      /* ✅ focus oro (coerente col menu) */
       input:focus,
       textarea:focus,
       select:focus {
-        border-color: rgba(99, 179, 237, 0.9);
+        border-color: rgba(246, 191, 26, 0.85);
+        box-shadow: 0 0 0 3px rgba(246, 191, 26, 0.18);
       }
+
       textarea {
         min-height: 84px;
         resize: vertical;
       }
+
       .full {
         grid-column: 1 / -1;
       }
+
       .btn {
         display: inline-flex;
         align-items: center;
@@ -77,15 +115,19 @@
         padding: 12px 14px;
         border-radius: 14px;
         border: 1px solid rgba(255, 255, 255, 0.18);
-        background: rgba(99, 179, 237, 0.22);
-        color: #eef2f7;
+        background: rgba(246, 191, 26, 0.22);
+        color: var(--txt);
         cursor: pointer;
-        font-weight: 700;
+        font-weight: 800;
+      }
+      .btn:hover {
+        background: rgba(246, 191, 26, 0.28);
       }
       .btn:disabled {
         opacity: 0.6;
         cursor: not-allowed;
       }
+
       .row {
         display: flex;
         gap: 12px;
@@ -93,25 +135,22 @@
         justify-content: space-between;
         margin-top: 14px;
       }
+
       .status {
         font-size: 13px;
         opacity: 0.92;
       }
-      .ok {
-        color: #7ee787;
-      }
-      .err {
-        color: #ff7b72;
-      }
+      .ok { color: #7ee787; }
+      .err { color: #ff7b72; }
+
       .hint {
         margin-top: 10px;
         font-size: 12px;
         opacity: 0.75;
       }
+
       @media (max-width: 640px) {
-        .grid {
-          grid-template-columns: 1fr;
-        }
+        .grid { grid-template-columns: 1fr; }
       }
 
       /* POPUP CONFERMA */
@@ -124,21 +163,25 @@
         padding: 20px;
         z-index: 9999;
       }
-      .modal.show {
-        display: grid;
-      }
+      .modal.show { display: grid; }
+
       .modal-card {
         width: min(720px, 100%);
         background: rgba(18, 24, 33, 0.98);
         border: 1px solid rgba(255, 255, 255, 0.14);
+        border-left: 6px solid var(--gold);
         border-radius: 16px;
         padding: 18px;
         box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
       }
+
       .modal-card h2 {
         margin: 0 0 10px;
         font-size: 18px;
+        color: var(--gold);
+        font-weight: 900;
       }
+
       .modal-text {
         white-space: pre-wrap;
         margin: 0;
@@ -149,6 +192,7 @@
         font-size: 14px;
         line-height: 1.45;
       }
+
       .modal-actions {
         display: flex;
         justify-content: flex-end;
@@ -183,16 +227,8 @@
               <label for="persone">Numero persone *</label>
               <select id="persone" name="persone" required>
                 <option value="">Seleziona</option>
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-                <option>6</option>
-                <option>7</option>
-                <option>8</option>
-                <option>9</option>
-                <option>10</option>
+                <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+                <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
               </select>
             </div>
 
@@ -217,7 +253,8 @@
             <div id="status" class="status"></div>
           </div>
 
-          <div class="hint">
+          <!-- ✅ FIX: questa div nel tuo codice era aperta ma non chiusa -->
+          <div class="hint"></div>
         </form>
       </div>
     </div>
@@ -244,7 +281,6 @@
       const statusEl = document.getElementById("status");
       const btn = document.getElementById("submitBtn");
 
-      // Popup elements
       const modal = document.getElementById("confirmModal");
       const modalTextEl = document.getElementById("modalText");
       const closeModalBtn = document.getElementById("closeModalBtn");
