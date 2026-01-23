@@ -62,6 +62,7 @@
       color:#fff;
       outline:none;
       appearance:none;
+      box-sizing:border-box;
     }
 
     textarea{ min-height:96px; resize:vertical; }
@@ -102,28 +103,26 @@
       align-items:center;
       justify-content:center;
       z-index:9999;
+      padding:14px;
     }
 
     .modal-box{
-      max-width:420px;
+      width:min(520px, 100%);
       background:rgba(0,0,0,.85);
       border:1px solid rgba(255,255,255,.2);
       border-left:6px solid var(--gold);
       border-radius:16px;
-      padding:20px;
+      padding:18px;
       color:var(--ok);
-      animation:pop .25s ease-out;
+      animation:pop .22s ease-out;
     }
 
     @keyframes pop{
-      from{ transform:scale(.9); opacity:0; }
+      from{ transform:scale(.94); opacity:0; }
       to{ transform:scale(1); opacity:1; }
     }
 
-    .modal button{
-      margin-top:16px;
-      width:100%;
-    }
+    .modal button{ margin-top:14px; width:100%; }
 
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
@@ -142,7 +141,7 @@
 
         <div class="full">
           <label>Nome e cognome *</label>
-          <input id="nome" required>
+          <input id="nome" placeholder="Es. Mario Rossi" required>
         </div>
 
         <div>
@@ -151,9 +150,9 @@
         </div>
 
         <div>
-          <label>Orario *</label>
-          <!-- ✅ STEP 15 MINUTI -->
-          <input id="ora" type="time" step="900" required>
+          <label>Orario (solo ogni 15 min) *</label>
+          <!-- iPhone può ignorare step: lo gestiamo via JS -->
+          <input id="ora" type="time" required>
         </div>
 
         <div>
@@ -168,23 +167,23 @@
 
         <div>
           <label>Telefono *</label>
-          <input id="telefono" required>
+          <input id="telefono" placeholder="Es. +39 333 1234567" required>
         </div>
 
         <div class="full">
           <label>Email *</label>
-          <input id="email" type="email" required>
+          <input id="email" type="email" placeholder="Es. nome@email.it" required>
         </div>
 
         <div class="full">
           <label>Note (facoltative)</label>
-          <textarea id="note"></textarea>
+          <textarea id="note" placeholder="Es. compleanno, allergie, richieste particolari..."></textarea>
         </div>
 
       </div>
 
       <div class="row">
-        <button class="btn">Conferma prenotazione</button>
+        <button class="btn" type="submit">Conferma prenotazione</button>
         <div class="status" id="status"></div>
       </div>
     </form>
@@ -192,59 +191,104 @@
 </div>
 
 <!-- POPUP -->
-<div class="modal" id="popup">
+<div class="modal" id="popup" role="dialog" aria-modal="true">
   <div class="modal-box">
     <div id="popupText"></div>
-    <button class="btn" onclick="closePopup()">Chiudi</button>
+    <button class="btn" type="button" onclick="closePopup()">Chiudi</button>
   </div>
 </div>
 
 <script>
-function normalizeTime(value){
-  const [h,m] = value.split(':').map(Number);
-  const rounded = Math.round(m / 15) * 15;
-  const hh = String(h + Math.floor(rounded / 60)).padStart(2,'0');
-  const mm = String(rounded % 60).padStart(2,'0');
-  return `${hh}:${mm}`;
-}
+  const elNome = document.getElementById('nome');
+  const elData = document.getElementById('data');
+  const elOra  = document.getElementById('ora');
+  const elPers = document.getElementById('persone');
+  const elTel  = document.getElementById('telefono');
+  const elMail = document.getElementById('email');
+  const elNote = document.getElementById('note');
+  const elStatus = document.getElementById('status');
 
-function closePopup(){
-  document.getElementById('popup').style.display='none';
-}
+  function closePopup(){
+    document.getElementById('popup').style.display='none';
+  }
 
-document.getElementById('bookingForm').addEventListener('submit', async e=>{
-  e.preventDefault();
+  // Arrotonda ai 15 min (scegliamo il "più vicino")
+  function roundTo15(value){
+    if(!value || !value.includes(':')) return value;
+    let [h,m] = value.split(':').map(n => parseInt(n,10));
+    if(Number.isNaN(h) || Number.isNaN(m)) return value;
 
-  const nome = nome.value.trim();
-  const persone = persone.value;
-  let oraVal = ora.value;
-  const dataVal = data.value;
+    const total = h * 60 + m;
+    const rounded = Math.round(total / 15) * 15;
 
-  // 🔒 sicurezza: forza step 15 minuti
-  oraVal = normalizeTime(oraVal);
-  ora.value = oraVal;
+    const hh = Math.floor((rounded % (24*60)) / 60);
+    const mm = (rounded % 60);
 
-  const dataIT = dataVal.split('-').reverse().join('/');
+    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  }
 
-  // 👉 QUI VA LA TUA FETCH (GIÀ FUNZIONANTE)
-  // await fetch(...)
+  // Se vuoi invece SEMPRE "arrotonda in su" (19:42 -> 19:45) usa questa:
+  function ceilTo15(value){
+    if(!value || !value.includes(':')) return value;
+    let [h,m] = value.split(':').map(n => parseInt(n,10));
+    if(Number.isNaN(h) || Number.isNaN(m)) return value;
 
-  document.getElementById('status').textContent =
-    "Prenotazione inviata correttamente riceverai la conferma a breve.";
+    const total = h * 60 + m;
+    const rounded = Math.ceil(total / 15) * 15;
 
-  document.getElementById('popupText').innerHTML = `
-    Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone.<br><br>
-    Ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b>.<br><br>
-    Il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
-    Dopo 30 minuti di ritardo il tavolo viene annullato.<br><br>
-    Buona giornata,<br>
-    <b>Manuel</b>.
-  `;
+    const hh = Math.floor((rounded % (24*60)) / 60);
+    const mm = (rounded % 60);
 
-  document.getElementById('popup').style.display='flex';
-  e.target.reset();
-});
+    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  }
+
+  // ✅ Qui scegli la regola:
+  // - roundTo15 = più vicino
+  // - ceilTo15  = sempre in su
+  function normalizeTimeField(){
+    if(!elOra.value) return;
+    const fixed = ceilTo15(elOra.value); // <-- consiglio "sempre in su"
+    elOra.value = fixed;
+  }
+
+  // Applica quando l’utente chiude il picker
+  elOra.addEventListener('change', normalizeTimeField);
+  elOra.addEventListener('blur', normalizeTimeField);
+
+  document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+
+    // sicurezza: normalizza SEMPRE prima di inviare
+    normalizeTimeField();
+
+    const nome = elNome.value.trim();
+    const dataVal = elData.value;
+    const oraVal = elOra.value;
+    const persone = elPers.value;
+
+    const dataIT = dataVal ? dataVal.split('-').reverse().join('/') : '';
+
+    // 👉 QUI dentro lasci la tua fetch attuale (quella che già invia la prenotazione)
+    // await fetch(...)
+
+    // status breve (come richiesto)
+    elStatus.textContent = "Prenotazione inviata correttamente riceverai la conferma a breve.";
+
+    // popup centrale
+    document.getElementById('popupText').innerHTML = `
+      Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone,
+      ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b> e ti ricordiamo che il tavolo viene riservato
+      per 30 minuti oltre l'orario di prenotazione.<br><br>
+      Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti
+      di accomodarsi. Grazie per la prenotazione.<br><br>
+      Buona giornata,<br>
+      <b>Manuel</b>.
+    `;
+    document.getElementById('popup').style.display = 'flex';
+
+    // reset form
+    e.target.reset();
+  });
 </script>
-
 </body>
 </html>
