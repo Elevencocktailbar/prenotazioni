@@ -6,48 +6,168 @@
   <title>Prenotazione - Eleven Cocktail Bar</title>
 
   <style>
-    :root{ --gold:#f6bf1a; --txt:#ffffff; }
-    html, body{ margin:0; background: transparent !important; color: var(--txt); font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
-    .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
-    .card{ background: rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12); border-left:6px solid var(--gold); border-radius:18px; padding:18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-    h1{ margin:0 0 10px; font-size:22px; font-weight:900; color:#fff; }
-    p{ margin:0 0 18px; color:#fff; opacity:.95; }
-    b{ color: var(--gold); }
-    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    label{ display:block; font-size:13px; margin-bottom:6px; color:#fff; }
-
-    input, textarea, select{
-      width:100%; box-sizing:border-box; display:block;
-      min-height:48px; height:48px; padding:12px;
-      border-radius:12px; border:1px solid rgba(255,255,255,.25);
-      background: rgba(0,0,0,.45); color:#fff !important;
-      line-height:24px; outline:none;
-      -webkit-appearance:none; -moz-appearance:none; appearance:none;
+    :root{
+      --gold:#f6bf1a;
+      --txt:#ffffff;
     }
-    textarea{ min-height:96px; height:auto; resize:vertical; line-height:22px; }
-    input[type="date"], input[type="time"]{ padding:12px; min-height:48px; height:48px; line-height:24px; }
+
+    html, body{
+      margin:0;
+      background: transparent !important;
+      color: var(--txt);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:24px;
+      background: transparent;
+    }
+
+    .card{
+      background: rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      border-left:6px solid var(--gold);
+      border-radius:18px;
+      padding:18px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size:22px;
+      font-weight:900;
+      color:#fff;
+    }
+
+    p{
+      margin:0 0 18px;
+      color:#fff;
+      opacity:.95;
+    }
+
+    b{ color: var(--gold); }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      margin-bottom:6px;
+      color:#fff;
+    }
+
+    input,
+    textarea,
+    select{
+      width:100%;
+      box-sizing:border-box;
+      display:block;
+
+      min-height:48px;
+      height:48px;
+      padding:12px;
+
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.25);
+      background: rgba(0,0,0,.45);
+      color:#fff !important;
+
+      line-height:24px;
+      outline:none;
+
+      -webkit-appearance:none;
+      -moz-appearance:none;
+      appearance:none;
+    }
+
+    textarea{
+      min-height:96px;
+      height:auto;
+      resize:vertical;
+      line-height:22px;
+    }
+
+    input[type="date"],
+    input[type="time"]{
+      padding:12px;
+      min-height:48px;
+      height:48px;
+      line-height:24px;
+    }
+
     input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator{ opacity:.85; cursor:pointer; }
+    input[type="time"]::-webkit-calendar-picker-indicator{
+      opacity:.85;
+      cursor:pointer;
+    }
+
     input[type="date"]::-webkit-datetime-edit,
-    input[type="time"]::-webkit-datetime-edit{ padding:0; }
-    ::placeholder{ color:rgba(255,255,255,.7); }
-    input:focus, textarea:focus, select:focus{ border-color: var(--gold); box-shadow: 0 0 0 3px rgba(246,191,26,.25); }
+    input[type="time"]::-webkit-datetime-edit{
+      padding:0;
+    }
+
+    ::placeholder{
+      color:rgba(255,255,255,.7);
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus{
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(246,191,26,.25);
+    }
 
     .full{ grid-column:1 / -1; }
 
     .btn{
-      padding:12px 16px; border-radius:14px; border:1px solid rgba(255,255,255,.25);
-      background: rgba(246,191,26,.25); color:#fff; font-weight:900; cursor:pointer;
+      padding:12px 16px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.25);
+      background: rgba(246,191,26,.25);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
     }
-    .btn:hover{ background: rgba(246,191,26,.35); }
-    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
 
-    .row{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:14px; }
-    .status{ font-size:13px; color:#fff; }
+    .btn:hover{
+      background: rgba(246,191,26,.35);
+    }
+
+    .btn[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
+
+    .row{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      justify-content:space-between;
+      margin-top:14px;
+    }
+
+    .status{
+      font-size:13px;
+      color:#fff;
+      white-space:pre-line; /* mostra correttamente le nuove righe */
+      max-width:420px;
+    }
+
     .ok{ color:#7ee787; }
     .err{ color:#ff7b72; }
 
-    @media(max-width:640px){ .grid{ grid-template-columns:1fr; } }
+    @media(max-width:640px){
+      .grid{ grid-template-columns:1fr; }
+      .row{ flex-direction:column; align-items:stretch; }
+      .status{ max-width:100%; }
+    }
   </style>
 </head>
 
@@ -111,7 +231,7 @@
   </div>
 
   <script>
-    // 🔧 METTI QUI IL TUO TOPIC NTFY (quello booking, non sync)
+    // ✅ NTFY: topic prenotazioni (quello "booking", NON sync)
     const NTFY_SERVER = "https://ntfy.sh";
     const NTFY_TOPIC  = "prenotazioni-eleven-cocktail-bar";
 
@@ -125,7 +245,7 @@
     }
 
     form.addEventListener("submit", async (e) => {
-      e.preventDefault();                 // ✅ evita refresh/reset automatico
+      e.preventDefault(); // ✅ evita refresh/submit standard
       setStatus("", true);
 
       const nome = document.getElementById("in_nome").value.trim();
@@ -141,7 +261,7 @@
         return;
       }
 
-      // Messaggio compatibile con il parser del gestionale
+      // Messaggio compatibile col gestionale (parser)
       const msg =
 `Nome: ${nome}
 Data: ${data}
@@ -169,8 +289,28 @@ ${note ? "Note: " + note : ""}`.trim();
           throw new Error("Errore invio (" + r.status + "): " + t);
         }
 
-        setStatus("Prenotazione inviata! ✅", true);
-        form.reset(); // ✅ reset SOLO dopo successo
+        // Data in formato italiano GG/MM/AAAA per la conferma
+        let dataIT = data;
+        try{
+          if (data && data.includes("-")) {
+            const [yy, mm, dd] = data.split("-");
+            dataIT = `${dd}/${mm}/${yy}`;
+          }
+        }catch(e){ /* ignore */ }
+
+        // ✅ Messaggio di conferma richiesto
+        const confirmText =
+`Ciao ${nome}, ti confermiamo la tua prenotazione per ${persone} persone, ti aspettiamo il ${dataIT} alle ${ora} e ti ricordiamo che il tavolo viene riservato per 30 minuti oltre l'orario di prenotazione.
+
+Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti di accomodarsi. Grazie per la prenotazione.
+
+Buona giornata,
+Manuel.`;
+
+        setStatus(confirmText, true);
+
+        // reset SOLO dopo successo
+        form.reset();
       }catch(err){
         console.error(err);
         setStatus("Errore: impossibile inviare la prenotazione. Riprova.", false);
