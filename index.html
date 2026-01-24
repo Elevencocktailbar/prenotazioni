@@ -130,7 +130,8 @@
       animation:pop .22s ease-out;
     }
 
-    .modal-box.err{ color: var(--err); }
+    /* ✅ niente rosso: usiamo sempre il verde come conferma stile Eleven */
+    .modal-box.err{ color: var(--ok); }
 
     @keyframes pop{
       from{ transform:scale(.94); opacity:0; }
@@ -166,8 +167,7 @@
 
         <div>
           <label>Orario (solo ogni 15 min) *</label>
-          <!-- ✅ step 900 = 15 min (aiuta molti browser) -->
-          <input id="ora" type="time" step="900" required>
+          <input id="ora" type="time" required>
         </div>
 
         <div class="full">
@@ -229,10 +229,7 @@
 </div>
 
 <script>
-  // >>>>>> IMPOSTA QUI IL TUO WORKER <<<<<<
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
-
-  // >>>>>> KEY PUBBLICA SOLO PER /api/book (non è quella admin) <<<<<<
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
 
   const elNome = document.getElementById('nome');
@@ -246,9 +243,35 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
-  function openPopup(html, isError=false){
-    const box = document.getElementById('popupBox');
-    box.classList.toggle('err', !!isError);
+  // ✅ TESTI PERSONALIZZATI (cambia qui quello che vuoi)
+  const MESSAGES = {
+    FULL: `
+      Ci dispiace, per l’orario scelto non abbiamo più disponibilità sul piano selezionato.<br><br>
+      Prova un altro orario oppure chiamaci così ti aiutiamo a sistemare la prenotazione.<br>
+      <b>Telefono: 3333367566</b>
+    `,
+    TOO_LARGE: `
+      Per gruppi numerosi preferiamo sentirci direttamente.<br>
+      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
+      <b>Telefono: 3333367566</b>
+    `,
+    CLOSED: `
+      Ci dispiace, l’orario selezionato non è prenotabile.<br>
+      Orari prenotabili: <b>18:00 – 01:00</b> (ogni 15 minuti).
+    `,
+    UNAUTHORIZED: `
+      Errore tecnico temporaneo.<br>
+      Riprova tra poco oppure contattaci.<br>
+      <b>Telefono: 3333367566</b>
+    `,
+    GENERIC: `
+      Errore durante l’invio. Riprova tra poco.<br>
+      Se il problema continua, chiamaci.<br>
+      <b>Telefono: 3333367566</b>
+    `
+  };
+
+  function openPopup(html){
     document.getElementById('popupText').innerHTML = html;
     document.getElementById('popup').style.display = 'flex';
   }
@@ -257,18 +280,14 @@
     document.getElementById('popup').style.display='none';
   }
 
-  // ✅ arrotonda SEMPRE in su al quarto d’ora successivo (19:42 -> 19:45)
   function ceilTo15(value){
     if(!value || !value.includes(':')) return value;
     let [h,m] = value.split(':').map(n => parseInt(n,10));
     if(Number.isNaN(h) || Number.isNaN(m)) return value;
-
     const total = h * 60 + m;
     const rounded = Math.ceil(total / 15) * 15;
-
     const hh = Math.floor((rounded % (24*60)) / 60);
     const mm = (rounded % 60);
-
     return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
   }
 
@@ -276,7 +295,6 @@
     if(!elOra.value) return;
     elOra.value = ceilTo15(elOra.value);
   }
-
   elOra.addEventListener('change', normalizeTimeField);
   elOra.addEventListener('blur', normalizeTimeField);
 
@@ -288,7 +306,6 @@
     return area === 'loft' ? 12 : 10;
   }
 
-  // ✅ /api/book con key pubblica (X-Book-Key)
   async function postBooking(payload){
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
@@ -299,21 +316,14 @@
       },
       body: JSON.stringify(payload),
     });
-
-    let data = {};
-    try { data = await res.json(); } catch {}
-
+    const data = await res.json().catch(()=> ({}));
     return { ok: res.ok, status: res.status, data };
   }
 
   document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     elStatus.textContent = "";
-
-    // blocca doppio invio
-    const oldBtnText = elBtn.textContent;
     elBtn.disabled = true;
-    elBtn.textContent = "Invio...";
 
     try{
       normalizeTimeField();
@@ -327,18 +337,13 @@
       const dataIT = formatDateIT(dataVal);
 
       if(!nome || !dataVal || !oraVal || !area || !personeN){
-        openPopup("Compila tutti i campi obbligatori.", true);
+        openPopup("Compila tutti i campi obbligatori.");
         return;
       }
 
       const maxN = maxOnlineForArea(area);
       if(personeN > maxN){
-        openPopup(
-          `Per gruppi numerosi preferiamo sentirci direttamente.<br>
-           Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
-           <b>Telefono: 3333367566</b>`,
-          true
-        );
+        openPopup(MESSAGES.TOO_LARGE);
         return;
       }
 
@@ -353,26 +358,12 @@
         note: elNote.value.trim(),
       };
 
-      const { ok, status, data } = await postBooking(payload);
+      const { ok, data } = await postBooking(payload);
 
+      // ✅ QUI gestiamo i messaggi personalizzati
       if(!ok || !data || data.ok !== true){
-        const details =
-          (data && (data.error || data.message)) ? String(data.error || data.message) : "";
-
-        // messaggio più utile (401 = key errata/mancante sul Worker)
-        if(status === 401){
-          openPopup(
-            `Errore: autorizzazione non valida.<br>
-             Controlla che nel Worker sia impostata la variabile <b>PUBLIC_BOOK_KEY</b> e che coincida con quella in GitHub.`,
-            true
-          );
-          return;
-        }
-
-        openPopup(
-          `Errore durante l’invio. Riprova tra poco.${details ? "<br><br><small>"+details+"</small>" : ""}`,
-          true
-        );
+        const code = (data && data.code) ? String(data.code) : "GENERIC";
+        openPopup(MESSAGES[code] || MESSAGES.GENERIC);
         return;
       }
 
@@ -391,7 +382,6 @@
 
     } finally {
       elBtn.disabled = false;
-      elBtn.textContent = oldBtnText;
     }
   });
 </script>
