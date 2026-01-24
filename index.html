@@ -36,12 +36,7 @@
       backdrop-filter: blur(10px);
     }
 
-    h1{
-      margin:0 0 10px;
-      font-size:22px;
-      font-weight:900;
-    }
-
+    h1{ margin:0 0 10px; font-size:22px; font-weight:900; }
     p{ margin:0 0 18px; opacity:.95; }
 
     .grid{
@@ -81,7 +76,6 @@
       line-height:1.35;
     }
 
-    /* telefono sotto: BIANCO + cliccabile */
     .help a{
       color:#fff;
       text-decoration:none;
@@ -249,7 +243,6 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
-  // I TUOI 2 MESSAGGI DEFINITIVI
   const MESSAGES = {
     TRY_OTHER_AREA: `
       In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
@@ -282,7 +275,7 @@
 
   function openPopup(html, isError=false){
     const box = document.getElementById('popupBox');
-    box.classList.toggle('err', !!isError);  // rosso solo se errore
+    box.classList.toggle('err', !!isError);
     document.getElementById('popupText').innerHTML = html;
     document.getElementById('popup').style.display = 'flex';
   }
@@ -317,16 +310,15 @@
     return area === 'loft' ? 12 : 10;
   }
 
-  // 18:00 -> 00:00 (00:00 incluso)
+  // ✅ ORARI: 18:00 -> 23:59 (00:00 NON è prenotabile online)
   function isWithinWorkingHours(time){
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
     if(Number.isNaN(h) || Number.isNaN(m)) return false;
 
     const minutes = h * 60 + m;
-    const OPEN = 18 * 60;   // 18:00 = 1080
-    const CLOSE = 24 * 60;  // 00:00 = 1440
-
+    const OPEN = 18 * 60;          // 18:00
+    const CLOSE = 23 * 60 + 59;    // 23:59
     return minutes >= OPEN && minutes <= CLOSE;
   }
 
@@ -349,7 +341,7 @@
     elStatus.textContent = "";
     elBtn.disabled = true;
 
-    let success = false; // ✅ reset SOLO se success=true
+    let success = false;
 
     try{
       normalizeTimeField();
@@ -367,7 +359,6 @@
         return;
       }
 
-      // ✅ controllo orario lavoro
       if(!isWithinWorkingHours(oraVal)){
         openPopup(MESSAGES.OUT_OF_HOURS, true);
         return;
@@ -394,21 +385,11 @@
 
       if(!ok || !data || data.ok !== true){
         const code = (data && data.code) ? String(data.code) : "GENERIC";
-
-        if(code === "TRY_OTHER_AREA"){
-          openPopup(MESSAGES.TRY_OTHER_AREA, true);
-          return;
-        }
-        if(code === "FULL_ALL"){
-          openPopup(MESSAGES.FULL_ALL, true);
-          return;
-        }
-
-        openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
-        return;
+        if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
+        if(code === "FULL_ALL") return openPopup(MESSAGES.FULL_ALL, true);
+        return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
       }
 
-      // ✅ conferma (verde)
       elStatus.textContent = "Prenotazione inviata correttamente riceverai la conferma a breve.";
 
       openPopup(
@@ -423,10 +404,10 @@
 
       success = true;
 
+    } catch (err) {
+      openPopup(MESSAGES.GENERIC, true);
     } finally {
       elBtn.disabled = false;
-
-      // ✅ reset SOLO se invio riuscito
       if(success){
         e.target.reset();
       }
