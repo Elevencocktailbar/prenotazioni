@@ -126,12 +126,12 @@
       border-left:6px solid var(--gold);
       border-radius:16px;
       padding:18px;
-      color:var(--ok);
+      color:var(--ok); /* default verde */
       animation:pop .22s ease-out;
     }
 
-    /* ✅ niente rosso: sempre verde */
-    .modal-box.err{ color: var(--ok); }
+    /* ✅ rosso SOLO quando serve */
+    .modal-box.err{ color: var(--err); }
 
     @keyframes pop{
       from{ transform:scale(.94); opacity:0; }
@@ -275,7 +275,9 @@
     `
   };
 
-  function openPopup(html){
+  function openPopup(html, isError=false){
+    const box = document.getElementById('popupBox');
+    box.classList.toggle('err', !!isError);  // ✅ rosso solo se isError=true
     document.getElementById('popupText').innerHTML = html;
     document.getElementById('popup').style.display = 'flex';
   }
@@ -284,7 +286,6 @@
     document.getElementById('popup').style.display='none';
   }
 
-  // Sempre in su ai 15 minuti
   function ceilTo15(value){
     if(!value || !value.includes(':')) return value;
     let [h,m] = value.split(':').map(n => parseInt(n,10));
@@ -342,13 +343,13 @@
       const dataIT = formatDateIT(dataVal);
 
       if(!nome || !dataVal || !oraVal || !area || !personeN){
-        openPopup(MESSAGES.MISSING_FIELDS);
+        openPopup(MESSAGES.MISSING_FIELDS, true);
         return;
       }
 
       const maxN = maxOnlineForArea(area);
       if(personeN > maxN){
-        openPopup(MESSAGES.TOO_LARGE);
+        openPopup(MESSAGES.TOO_LARGE, true);
         return;
       }
 
@@ -365,19 +366,25 @@
 
       const { ok, data } = await postBooking(payload);
 
-      // ✅ Usa i codici del Worker (TRY_OTHER_AREA / FULL_ALL) o messaggio diretto
+      // ❌ errori (rosso per i due messaggi principali)
       if(!ok || !data || data.ok !== true){
-        // Se il Worker manda un testo personalizzato, lo usiamo
-        if (data && data.message) {
-          openPopup(String(data.message).replaceAll("\n","<br>"));
+        const code = (data && data.code) ? String(data.code) : "GENERIC";
+
+        if(code === "TRY_OTHER_AREA"){
+          openPopup(MESSAGES.TRY_OTHER_AREA, true);
+          return;
+        }
+        if(code === "FULL_ALL"){
+          openPopup(MESSAGES.FULL_ALL, true);
           return;
         }
 
-        const code = (data && data.code) ? String(data.code) : "GENERIC";
-        openPopup(MESSAGES[code] || MESSAGES.GENERIC);
+        // altri errori tecnici -> rosso
+        openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
         return;
       }
 
+      // ✅ conferma (verde)
       elStatus.textContent = "Prenotazione inviata correttamente riceverai la conferma a breve.";
 
       openPopup(
@@ -386,7 +393,8 @@
          per 30 minuti oltre l'orario di prenotazione.<br><br>
          Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti
          di accomodarsi. Grazie per la prenotazione.<br><br>
-         Buona giornata,<br><b>Manuel</b>.`
+         Buona giornata,<br><b>Manuel</b>.`,
+        false
       );
 
       e.target.reset();
