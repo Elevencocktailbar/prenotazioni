@@ -166,7 +166,8 @@
 
         <div>
           <label>Orario (solo ogni 15 min) *</label>
-          <input id="ora" type="time" required>
+          <!-- ✅ step 900 = 15 min (aiuta molti browser) -->
+          <input id="ora" type="time" step="900" required>
         </div>
 
         <div class="full">
@@ -256,14 +257,18 @@
     document.getElementById('popup').style.display='none';
   }
 
+  // ✅ arrotonda SEMPRE in su al quarto d’ora successivo (19:42 -> 19:45)
   function ceilTo15(value){
     if(!value || !value.includes(':')) return value;
     let [h,m] = value.split(':').map(n => parseInt(n,10));
     if(Number.isNaN(h) || Number.isNaN(m)) return value;
+
     const total = h * 60 + m;
     const rounded = Math.ceil(total / 15) * 15;
+
     const hh = Math.floor((rounded % (24*60)) / 60);
     const mm = (rounded % 60);
+
     return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
   }
 
@@ -294,14 +299,21 @@
       },
       body: JSON.stringify(payload),
     });
-    const data = await res.json().catch(()=> ({}));
+
+    let data = {};
+    try { data = await res.json(); } catch {}
+
     return { ok: res.ok, status: res.status, data };
   }
 
   document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
     elStatus.textContent = "";
+
+    // blocca doppio invio
+    const oldBtnText = elBtn.textContent;
     elBtn.disabled = true;
+    elBtn.textContent = "Invio...";
 
     try{
       normalizeTimeField();
@@ -341,11 +353,26 @@
         note: elNote.value.trim(),
       };
 
-      const { ok, data } = await postBooking(payload);
+      const { ok, status, data } = await postBooking(payload);
 
       if(!ok || !data || data.ok !== true){
-        const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : "";
-        openPopup(`Errore durante l’invio. Riprova tra poco.${msg ? "<br><br><small>"+msg+"</small>" : ""}`, true);
+        const details =
+          (data && (data.error || data.message)) ? String(data.error || data.message) : "";
+
+        // messaggio più utile (401 = key errata/mancante sul Worker)
+        if(status === 401){
+          openPopup(
+            `Errore: autorizzazione non valida.<br>
+             Controlla che nel Worker sia impostata la variabile <b>PUBLIC_BOOK_KEY</b> e che coincida con quella in GitHub.`,
+            true
+          );
+          return;
+        }
+
+        openPopup(
+          `Errore durante l’invio. Riprova tra poco.${details ? "<br><br><small>"+details+"</small>" : ""}`,
+          true
+        );
         return;
       }
 
@@ -364,6 +391,7 @@
 
     } finally {
       elBtn.disabled = false;
+      elBtn.textContent = oldBtnText;
     }
   });
 </script>
