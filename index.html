@@ -82,6 +82,8 @@
       font-weight:900;
     }
 
+    .help a:hover{ text-decoration:underline; }
+
     .btn{
       padding:12px 16px;
       border-radius:14px;
@@ -127,13 +129,13 @@
       border-left:6px solid var(--gold);
       border-radius:16px;
       padding:18px;
-      color:var(--ok);
+      color:var(--ok); /* default verde */
       animation:pop .22s ease-out;
       pointer-events:auto;
       position:relative;
     }
 
-    .modal-box.err{ color: var(--err); }
+    .modal-box.err{ color: var(--err); } /* rosso solo errori */
 
     @keyframes pop{
       from{ transform:scale(.94); opacity:0; }
@@ -168,8 +170,8 @@
         </div>
 
         <div>
-          <label>Orario (ogni 15 min) *</label>
-          <!-- ✅ step=900 = 15 minuti -->
+          <label>Orario (solo ogni 15 min) *</label>
+          <!-- ✅ 15 minuti nativi -->
           <input id="ora" type="time" step="900" required>
         </div>
 
@@ -189,10 +191,12 @@
             <option>1</option><option>2</option><option>3</option>
             <option>4</option><option>5</option><option>6</option>
             <option>7</option><option>8</option><option>9</option><option>10</option>
+            <option>11</option><option>12</option>
           </select>
 
           <div class="help">
             Per gruppi numerosi preferiamo sentirci direttamente.<br>
+            Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
             Telefono: <a href="tel:+393333367566">3333367566</a>
           </div>
         </div>
@@ -209,7 +213,7 @@
 
         <div class="full">
           <label>Note (facoltative)</label>
-          <textarea id="note" placeholder="Es. compleanno, allergie..."></textarea>
+          <textarea id="note" placeholder="Es. compleanno, allergie, richieste particolari..."></textarea>
         </div>
 
       </div>
@@ -231,7 +235,7 @@
 </div>
 
 <script>
-  // ✅ tuoi parametri Worker
+  // ⚠️ Worker
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
 
@@ -268,7 +272,7 @@
     `,
     TOO_LARGE: `
       Per gruppi numerosi preferiamo sentirci direttamente.<br>
-      Chiamaci così possiamo organizzare al meglio tavoli e sedute.<br><br>
+      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
       Telefono: <a href="tel:+393333367566" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
@@ -324,7 +328,7 @@
     elOra.value = ceilTo15(elOra.value);
   }
 
-  // per desktop
+  // desktop
   elOra.addEventListener('change', normalizeTimeField);
   elOra.addEventListener('blur', normalizeTimeField);
 
@@ -336,13 +340,15 @@
     return area === 'loft' ? 12 : 10;
   }
 
+  // ✅ ORARI: 18:00 -> 23:59 (00:00 NON è prenotabile online)
   function isWithinWorkingHours(time){
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
     if(Number.isNaN(h) || Number.isNaN(m)) return false;
+
     const minutes = h * 60 + m;
-    const OPEN = 18 * 60;
-    const CLOSE = 23 * 60 + 59;
+    const OPEN = 18 * 60;          // 18:00
+    const CLOSE = 23 * 60 + 59;    // 23:59
     return minutes >= OPEN && minutes <= CLOSE;
   }
 
@@ -366,7 +372,7 @@
     elBtn.disabled = true;
 
     try{
-      // ✅ SEMPRE prima dell'invio (mobile safe)
+      // ✅ SEMPRE (mobile-safe)
       normalizeTimeField();
 
       const nome = elNome.value.trim();
@@ -374,7 +380,6 @@
       const oraVal = elOra.value;
       const area = elArea.value;
       const personeN = parseInt(elPers.value || "0", 10);
-
       const dataIT = formatDateIT(dataVal);
 
       if(!nome || !dataVal || !oraVal || !area || !personeN){
@@ -406,7 +411,6 @@
 
       const { ok, data } = await postBooking(payload);
 
-      // Il worker risponde ok:true quando salva davvero
       if(!ok || !data || data.ok !== true){
         const code = (data && data.code) ? String(data.code) : "GENERIC";
         if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
@@ -425,7 +429,7 @@
         false
       );
 
-      // ✅ reset SOLO dopo successo reale
+      // ✅ reset SOLO dopo vero successo
       elForm.reset();
 
     } catch (err) {
