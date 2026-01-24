@@ -130,7 +130,7 @@
       animation:pop .22s ease-out;
     }
 
-    /* ✅ niente rosso: usiamo sempre il verde come conferma stile Eleven */
+    /* ✅ niente rosso: sempre verde */
     .modal-box.err{ color: var(--ok); }
 
     @keyframes pop{
@@ -243,30 +243,34 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
-  // ✅ TESTI PERSONALIZZATI (cambia qui quello che vuoi)
+  // ✅ I TUOI 2 MESSAGGI DEFINITIVI
   const MESSAGES = {
-    FULL: `
-      Ci dispiace, per l’orario scelto non abbiamo più disponibilità sul piano selezionato.<br><br>
-      Prova un altro orario oppure chiamaci così ti aiutiamo a sistemare la prenotazione.<br>
+    TRY_OTHER_AREA: `
+      In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
+      Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
+      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
+      <b>Telefono: 3333367566</b>
+    `,
+    FULL_ALL: `
+      In questo orario non abbiamo più disponibilità di tavoli per il numero di persone indicato.<br>
+      Ti consigliamo di provare a selezionare un orario diverso.<br>
+      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
       <b>Telefono: 3333367566</b>
     `,
     TOO_LARGE: `
       Per gruppi numerosi preferiamo sentirci direttamente.<br>
-      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
+      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
       <b>Telefono: 3333367566</b>
     `,
-    CLOSED: `
-      Ci dispiace, l’orario selezionato non è prenotabile.<br>
-      Orari prenotabili: <b>18:00 – 01:00</b> (ogni 15 minuti).
-    `,
+    MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
     UNAUTHORIZED: `
       Errore tecnico temporaneo.<br>
-      Riprova tra poco oppure contattaci.<br>
+      Riprova tra poco oppure contattaci.<br><br>
       <b>Telefono: 3333367566</b>
     `,
     GENERIC: `
       Errore durante l’invio. Riprova tra poco.<br>
-      Se il problema continua, chiamaci.<br>
+      Se il problema continua, chiamaci.<br><br>
       <b>Telefono: 3333367566</b>
     `
   };
@@ -280,6 +284,7 @@
     document.getElementById('popup').style.display='none';
   }
 
+  // Sempre in su ai 15 minuti
   function ceilTo15(value){
     if(!value || !value.includes(':')) return value;
     let [h,m] = value.split(':').map(n => parseInt(n,10));
@@ -337,7 +342,7 @@
       const dataIT = formatDateIT(dataVal);
 
       if(!nome || !dataVal || !oraVal || !area || !personeN){
-        openPopup("Compila tutti i campi obbligatori.");
+        openPopup(MESSAGES.MISSING_FIELDS);
         return;
       }
 
@@ -360,8 +365,14 @@
 
       const { ok, data } = await postBooking(payload);
 
-      // ✅ QUI gestiamo i messaggi personalizzati
+      // ✅ Usa i codici del Worker (TRY_OTHER_AREA / FULL_ALL) o messaggio diretto
       if(!ok || !data || data.ok !== true){
+        // Se il Worker manda un testo personalizzato, lo usiamo
+        if (data && data.message) {
+          openPopup(String(data.message).replaceAll("\n","<br>"));
+          return;
+        }
+
         const code = (data && data.code) ? String(data.code) : "GENERIC";
         openPopup(MESSAGES[code] || MESSAGES.GENERIC);
         return;
