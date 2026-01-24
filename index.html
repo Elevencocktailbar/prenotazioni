@@ -20,12 +20,7 @@
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
-    .wrap{
-      max-width:720px;
-      margin:0 auto;
-      padding:24px;
-      background: transparent;
-    }
+    .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
 
     .card{
       background: rgba(0,0,0,.55);
@@ -39,12 +34,7 @@
     h1{ margin:0 0 10px; font-size:22px; font-weight:900; }
     p{ margin:0 0 18px; opacity:.95; }
 
-    .grid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-
+    .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     label{ font-size:13px; margin-bottom:6px; display:block; }
 
     input, textarea, select{
@@ -81,7 +71,6 @@
       text-decoration:none;
       font-weight:900;
     }
-
     .help a:hover{ text-decoration:underline; }
 
     .btn{
@@ -94,10 +83,7 @@
       cursor:pointer;
     }
 
-    .btn:disabled{
-      opacity:.6;
-      cursor:not-allowed;
-    }
+    .btn:disabled{ opacity:.6; cursor:not-allowed; }
 
     .row{
       display:flex;
@@ -119,7 +105,6 @@
       justify-content:center;
       z-index:9999;
       padding:14px;
-      pointer-events:auto;
     }
 
     .modal-box{
@@ -131,7 +116,6 @@
       padding:18px;
       color:var(--ok);
       animation:pop .22s ease-out;
-      pointer-events:auto;
       position:relative;
     }
 
@@ -197,8 +181,7 @@
             Per gruppi numerosi preferiamo sentirci direttamente.<br>
             Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
             Telefono:
-            <!-- ✅ tel link iframe-safe (gestito anche da JS) -->
-            <a class="tel-link" href="tel:+393333367566" data-tel="+393333367566">3333367566</a>
+            <a href="tel:+393333367566" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
           </div>
         </div>
 
@@ -236,11 +219,8 @@
 </div>
 
 <script>
-  // ⚠️ Worker
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
-
-  // ✅ numero “canonico” (lo usiamo ovunque)
   const BAR_TEL = "+393333367566";
 
   const elForm = document.getElementById('bookingForm');
@@ -255,68 +235,20 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
-  // ✅ Helper: chiamata funzionante anche dentro iframe (iOS/Android)
-  function callPhone(number){
-    const tel = (number || BAR_TEL || "").trim();
-    if(!tel) return;
-    const url = `tel:${tel}`;
-
-    // Prova ad uscire dall'iframe (se presente)
-    try {
-      if (window.top && window.top !== window) {
-        window.top.location.href = url;
-        return;
-      }
-    } catch (e) {
-      // se cross-origin blocca top, fallback
-    }
-
-    // fallback normale
-    window.location.href = url;
-  }
-
-  // Aggancia TUTTI i tel-link (anche quelli che appaiono nei popup)
-  function wireTelLinks(root=document){
-    const links = root.querySelectorAll("a.tel-link[href^='tel:'], a.tel-link[data-tel]");
-    links.forEach(a => {
-      // evita doppio bind
-      if (a.dataset._wired === "1") return;
-      a.dataset._wired = "1";
-
-      const tel = a.getAttribute("href")?.replace(/^tel:/,'') || a.dataset.tel || BAR_TEL;
-
-      a.addEventListener("click", (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        callPhone(tel);
-      });
-
-      // iOS: a volte serve touchend
-      a.addEventListener("touchend", (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        callPhone(tel);
-      }, { passive:false });
-    });
-  }
-
-  // iniziale
-  wireTelLinks(document);
-
   const MESSAGES = {
     TRY_OTHER_AREA: `
       In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
       Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
       Potrai comunque consumare al banco senza necessità di prenotazione.<br>
       Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     FULL_ALL: `
       In questo orario non abbiamo più disponibilità di tavoli per il numero di persone indicato.<br>
       Ti consigliamo di provare a selezionare un orario diverso.<br>
       Potrai comunque consumare al banco senza necessità di prenotazione.<br>
       Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     OUT_OF_HOURS: `
       Le prenotazioni sono disponibili dalle <b>18:00</b> alle <b>23:59</b>.<br>
@@ -325,13 +257,13 @@
     TOO_LARGE: `
       Per gruppi numerosi preferiamo sentirci direttamente.<br>
       Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
-      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
     GENERIC: `
       Errore durante l’invio. Riprova tra poco.<br>
       Se il problema continua, chiamaci.<br><br>
-      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `
   };
 
@@ -340,9 +272,6 @@
     box.classList.toggle('err', !!isError);
     document.getElementById('popupText').innerHTML = html;
     document.getElementById('popup').style.display = 'flex';
-
-    // ✅ bind tel links appena inseriti nel popup
-    wireTelLinks(document.getElementById('popupText'));
   }
 
   function closePopup(){
@@ -353,16 +282,13 @@
   const popup = document.getElementById("popup");
   const btnClose = document.getElementById("popupCloseBtn");
 
+  // ✅ niente touchend con preventDefault: lasciamo al browser il comportamento “sicuro”
   btnClose.addEventListener("click", (e)=>{
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
     closePopup();
   });
 
-  btnClose.addEventListener("touchend", (e)=>{
-    e.preventDefault(); e.stopPropagation();
-    closePopup();
-  }, { passive:false });
-
+  // chiudi toccando fuori dal box
   popup.addEventListener("click", (e)=>{
     if(e.target === popup) closePopup();
   });
@@ -398,7 +324,6 @@
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
     if(Number.isNaN(h) || Number.isNaN(m)) return false;
-
     const minutes = h * 60 + m;
     const OPEN = 18 * 60;
     const CLOSE = 23 * 60 + 59;
@@ -409,10 +334,7 @@
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Book-Key': PUBLIC_BOOK_KEY
-      },
+      headers: { 'Content-Type': 'application/json', 'X-Book-Key': PUBLIC_BOOK_KEY },
       body: JSON.stringify(payload),
     });
     const data = await res.json().catch(()=> ({}));
@@ -451,11 +373,7 @@
       }
 
       const payload = {
-        area,
-        nome,
-        data: dataVal,
-        ora: oraVal,
-        persone: personeN,
+        area, nome, data: dataVal, ora: oraVal, persone: personeN,
         telefono: elTel.value.trim(),
         email: elMail.value.trim(),
         note: elNote.value.trim(),
@@ -471,7 +389,6 @@
       }
 
       elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
-
       openPopup(
         `Ciao <b>${nome}</b>, ti confermiamo la tua prenotazione per <b>${personeN}</b> persone.<br>
          Ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b>.<br><br>
