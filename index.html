@@ -231,7 +231,7 @@
   // >>>>>> IMPOSTA QUI IL TUO WORKER <<<<<<
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
 
-  // >>>>>> METTI QUI LA KEY PUBBLICA (PUBLIC_BOOK_KEY) <<<<<<
+  // >>>>>> KEY PUBBLICA SOLO PER /api/book (non è quella admin) <<<<<<
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
 
   const elNome = document.getElementById('nome');
@@ -283,14 +283,14 @@
     return area === 'loft' ? 12 : 10;
   }
 
-  // ✅ QUI È LA MODIFICA IMPORTANTE: aggiunge X-Reserve-Key
+  // ✅ /api/book con key pubblica (X-Book-Key)
   async function postBooking(payload){
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Reserve-Key': PUBLIC_BOOK_KEY
+        'X-Book-Key': PUBLIC_BOOK_KEY
       },
       body: JSON.stringify(payload),
     });
@@ -344,7 +344,8 @@
       const { ok, data } = await postBooking(payload);
 
       if(!ok || !data || data.ok !== true){
-        openPopup("Errore durante l’invio. Riprova tra poco.", true);
+        const msg = (data && (data.error || data.message)) ? String(data.error || data.message) : "";
+        openPopup(`Errore durante l’invio. Riprova tra poco.${msg ? "<br><br><small>"+msg+"</small>" : ""}`, true);
         return;
       }
 
