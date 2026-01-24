@@ -81,7 +81,6 @@
       text-decoration:none;
       font-weight:900;
     }
-    .help a:hover{ text-decoration:underline; }
 
     .btn{
       padding:12px 16px;
@@ -118,6 +117,7 @@
       justify-content:center;
       z-index:9999;
       padding:14px;
+      pointer-events:auto;
     }
 
     .modal-box{
@@ -127,11 +127,13 @@
       border-left:6px solid var(--gold);
       border-radius:16px;
       padding:18px;
-      color:var(--ok); /* default verde */
+      color:var(--ok);
       animation:pop .22s ease-out;
+      pointer-events:auto;
+      position:relative;
     }
 
-    .modal-box.err{ color: var(--err); } /* rosso solo errori */
+    .modal-box.err{ color: var(--err); }
 
     @keyframes pop{
       from{ transform:scale(.94); opacity:0; }
@@ -157,7 +159,7 @@
 
         <div class="full">
           <label>Nome e cognome *</label>
-          <input id="nome" placeholder="Es. Mario Rossi" required>
+          <input id="nome" required>
         </div>
 
         <div>
@@ -166,7 +168,7 @@
         </div>
 
         <div>
-          <label>Orario (solo ogni 15 min) *</label>
+          <label>Orario *</label>
           <input id="ora" type="time" required>
         </div>
 
@@ -187,27 +189,21 @@
             <option>4</option><option>5</option><option>6</option>
             <option>7</option><option>8</option><option>9</option><option>10</option>
           </select>
-
-          <div class="help">
-            Per gruppi numerosi preferiamo sentirci direttamente.<br>
-            Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
-            Telefono: <a href="tel:+393333367566">3333367566</a>
-          </div>
         </div>
 
         <div>
           <label>Telefono *</label>
-          <input id="telefono" placeholder="Es. +39 333 1234567" required>
+          <input id="telefono" required>
         </div>
 
         <div class="full">
           <label>Email *</label>
-          <input id="email" type="email" placeholder="Es. nome@email.it" required>
+          <input id="email" type="email" required>
         </div>
 
         <div class="full">
-          <label>Note (facoltative)</label>
-          <textarea id="note" placeholder="Es. compleanno, allergie, richieste particolari..."></textarea>
+          <label>Note</label>
+          <textarea id="note"></textarea>
         </div>
 
       </div>
@@ -221,60 +217,14 @@
 </div>
 
 <!-- POPUP -->
-<div class="modal" id="popup" role="dialog" aria-modal="true">
+<div class="modal" id="popup">
   <div class="modal-box" id="popupBox">
     <div id="popupText"></div>
-    <button class="btn" type="button" onclick="closePopup()">Chiudi</button>
+    <button class="btn" type="button" id="popupCloseBtn">Chiudi</button>
   </div>
 </div>
 
 <script>
-  const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
-  const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
-
-  const elNome = document.getElementById('nome');
-  const elData = document.getElementById('data');
-  const elOra  = document.getElementById('ora');
-  const elArea = document.getElementById('area');
-  const elPers = document.getElementById('persone');
-  const elTel  = document.getElementById('telefono');
-  const elMail = document.getElementById('email');
-  const elNote = document.getElementById('note');
-  const elStatus = document.getElementById('status');
-  const elBtn = document.getElementById('btnSubmit');
-
-  const MESSAGES = {
-    TRY_OTHER_AREA: `
-      In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
-      Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
-      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
-      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a href="tel:+393333367566" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
-    `,
-    FULL_ALL: `
-      In questo orario non abbiamo più disponibilità di tavoli per il numero di persone indicato.<br>
-      Ti consigliamo di provare a selezionare un orario diverso.<br>
-      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
-      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a href="tel:+393333367566" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
-    `,
-    OUT_OF_HOURS: `
-      Le prenotazioni sono disponibili dalle <b>18:00</b> alle <b>23:59</b>.<br>
-      Ti invitiamo a selezionare un orario compreso in questa fascia.
-    `,
-    TOO_LARGE: `
-      Per gruppi numerosi preferiamo sentirci direttamente.<br>
-      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
-      Telefono: <a href="tel:+393333367566" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
-    `,
-    MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
-    GENERIC: `
-      Errore durante l’invio. Riprova tra poco.<br>
-      Se il problema continua, chiamaci.<br><br>
-      Telefono: <a href="tel:+393333367566" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
-    `
-  };
-
   function openPopup(html, isError=false){
     const box = document.getElementById('popupBox');
     box.classList.toggle('err', !!isError);
@@ -283,137 +233,25 @@
   }
 
   function closePopup(){
-    document.getElementById('popup').style.display='none';
+    const p = document.getElementById('popup');
+    if(p) p.style.display = 'none';
   }
 
-  function ceilTo15(value){
-    if(!value || !value.includes(':')) return value;
-    let [h,m] = value.split(':').map(n => parseInt(n,10));
-    if(Number.isNaN(h) || Number.isNaN(m)) return value;
-    const total = h * 60 + m;
-    const rounded = Math.ceil(total / 15) * 15;
-    const hh = Math.floor((rounded % (24*60)) / 60);
-    const mm = (rounded % 60);
-    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
-  }
+  const popup = document.getElementById("popup");
+  const btnClose = document.getElementById("popupCloseBtn");
 
-  function normalizeTimeField(){
-    if(!elOra.value) return;
-    elOra.value = ceilTo15(elOra.value);
-  }
-  elOra.addEventListener('change', normalizeTimeField);
-  elOra.addEventListener('blur', normalizeTimeField);
+  btnClose.addEventListener("click", (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    closePopup();
+  });
 
-  function formatDateIT(yyyy_mm_dd){
-    return yyyy_mm_dd ? yyyy_mm_dd.split('-').reverse().join('/') : '';
-  }
+  btnClose.addEventListener("touchend", (e)=>{
+    e.preventDefault(); e.stopPropagation();
+    closePopup();
+  }, { passive:false });
 
-  function maxOnlineForArea(area){
-    return area === 'loft' ? 12 : 10;
-  }
-
-  // ✅ ORARI: 18:00 -> 23:59 (00:00 NON è prenotabile online)
-  function isWithinWorkingHours(time){
-    if(!time || !time.includes(':')) return false;
-    const [h, m] = time.split(':').map(Number);
-    if(Number.isNaN(h) || Number.isNaN(m)) return false;
-
-    const minutes = h * 60 + m;
-    const OPEN = 18 * 60;          // 18:00
-    const CLOSE = 23 * 60 + 59;    // 23:59
-    return minutes >= OPEN && minutes <= CLOSE;
-  }
-
-  async function postBooking(payload){
-    const url = `${CLOUD_API_BASE}/api/book`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Book-Key': PUBLIC_BOOK_KEY
-      },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json().catch(()=> ({}));
-    return { ok: res.ok, status: res.status, data };
-  }
-
-  document.getElementById('bookingForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    elStatus.textContent = "";
-    elBtn.disabled = true;
-
-    let success = false;
-
-    try{
-      normalizeTimeField();
-
-      const nome = elNome.value.trim();
-      const dataVal = elData.value;
-      const oraVal = elOra.value;
-      const area = elArea.value;
-      const personeN = parseInt(elPers.value || "0", 10);
-
-      const dataIT = formatDateIT(dataVal);
-
-      if(!nome || !dataVal || !oraVal || !area || !personeN){
-        openPopup(MESSAGES.MISSING_FIELDS, true);
-        return;
-      }
-
-      if(!isWithinWorkingHours(oraVal)){
-        openPopup(MESSAGES.OUT_OF_HOURS, true);
-        return;
-      }
-
-      const maxN = maxOnlineForArea(area);
-      if(personeN > maxN){
-        openPopup(MESSAGES.TOO_LARGE, true);
-        return;
-      }
-
-      const payload = {
-        area,
-        nome,
-        data: dataVal,
-        ora: oraVal,
-        persone: personeN,
-        telefono: elTel.value.trim(),
-        email: elMail.value.trim(),
-        note: elNote.value.trim(),
-      };
-
-      const { ok, data } = await postBooking(payload);
-
-      if(!ok || !data || data.ok !== true){
-        const code = (data && data.code) ? String(data.code) : "GENERIC";
-        if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
-        if(code === "FULL_ALL") return openPopup(MESSAGES.FULL_ALL, true);
-        return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
-      }
-
-      elStatus.textContent = "Prenotazione inviata correttamente riceverai la conferma a breve.";
-
-      openPopup(
-        `Ciao ${nome}, ti confermiamo la tua prenotazione per ${personeN} persone,
-         ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b> e ti ricordiamo che il tavolo viene riservato
-         per 30 minuti oltre l'orario di prenotazione.<br><br>
-         Dopo 30 minuti di ritardo il tavolo viene annullato per dare la possibilità ad altri ospiti
-         di accomodarsi. Grazie per la prenotazione.<br><br>
-         Buona giornata,<br><b>Manuel</b>.`,
-        false
-      );
-
-      success = true;
-
-    } catch (err) {
-      openPopup(MESSAGES.GENERIC, true);
-    } finally {
-      elBtn.disabled = false;
-      if(success){
-        e.target.reset();
-      }
-    }
+  popup.addEventListener("click", (e)=>{
+    if(e.target === popup) closePopup();
   });
 </script>
 </body>
