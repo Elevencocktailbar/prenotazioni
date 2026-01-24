@@ -129,13 +129,13 @@
       border-left:6px solid var(--gold);
       border-radius:16px;
       padding:18px;
-      color:var(--ok); /* default verde */
+      color:var(--ok);
       animation:pop .22s ease-out;
       pointer-events:auto;
       position:relative;
     }
 
-    .modal-box.err{ color: var(--err); } /* rosso solo errori */
+    .modal-box.err{ color: var(--err); }
 
     @keyframes pop{
       from{ transform:scale(.94); opacity:0; }
@@ -171,7 +171,6 @@
 
         <div>
           <label>Orario (solo ogni 15 min) *</label>
-          <!-- ✅ 15 minuti nativi -->
           <input id="ora" type="time" step="900" required>
         </div>
 
@@ -198,7 +197,8 @@
             Per gruppi numerosi preferiamo sentirci direttamente.<br>
             Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br>
             Telefono:
-            <a href="tel:+393333367566" rel="nofollow noopener">3333367566</a>
+            <!-- ✅ tel link iframe-safe (gestito anche da JS) -->
+            <a class="tel-link" href="tel:+393333367566" data-tel="+393333367566">3333367566</a>
           </div>
         </div>
 
@@ -240,6 +240,9 @@
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
 
+  // ✅ numero “canonico” (lo usiamo ovunque)
+  const BAR_TEL = "+393333367566";
+
   const elForm = document.getElementById('bookingForm');
   const elNome = document.getElementById('nome');
   const elData = document.getElementById('data');
@@ -252,20 +255,68 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
+  // ✅ Helper: chiamata funzionante anche dentro iframe (iOS/Android)
+  function callPhone(number){
+    const tel = (number || BAR_TEL || "").trim();
+    if(!tel) return;
+    const url = `tel:${tel}`;
+
+    // Prova ad uscire dall'iframe (se presente)
+    try {
+      if (window.top && window.top !== window) {
+        window.top.location.href = url;
+        return;
+      }
+    } catch (e) {
+      // se cross-origin blocca top, fallback
+    }
+
+    // fallback normale
+    window.location.href = url;
+  }
+
+  // Aggancia TUTTI i tel-link (anche quelli che appaiono nei popup)
+  function wireTelLinks(root=document){
+    const links = root.querySelectorAll("a.tel-link[href^='tel:'], a.tel-link[data-tel]");
+    links.forEach(a => {
+      // evita doppio bind
+      if (a.dataset._wired === "1") return;
+      a.dataset._wired = "1";
+
+      const tel = a.getAttribute("href")?.replace(/^tel:/,'') || a.dataset.tel || BAR_TEL;
+
+      a.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        callPhone(tel);
+      });
+
+      // iOS: a volte serve touchend
+      a.addEventListener("touchend", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        callPhone(tel);
+      }, { passive:false });
+    });
+  }
+
+  // iniziale
+  wireTelLinks(document);
+
   const MESSAGES = {
     TRY_OTHER_AREA: `
       In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
       Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
       Potrai comunque consumare al banco senza necessità di prenotazione.<br>
       Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a href="tel:+393333367566" rel="nofollow noopener" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     FULL_ALL: `
       In questo orario non abbiamo più disponibilità di tavoli per il numero di persone indicato.<br>
       Ti consigliamo di provare a selezionare un orario diverso.<br>
       Potrai comunque consumare al banco senza necessità di prenotazione.<br>
       Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
-      Telefono: <a href="tel:+393333367566" rel="nofollow noopener" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     OUT_OF_HOURS: `
       Le prenotazioni sono disponibili dalle <b>18:00</b> alle <b>23:59</b>.<br>
@@ -274,13 +325,13 @@
     TOO_LARGE: `
       Per gruppi numerosi preferiamo sentirci direttamente.<br>
       Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
-      Telefono: <a href="tel:+393333367566" rel="nofollow noopener" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
     GENERIC: `
       Errore durante l’invio. Riprova tra poco.<br>
       Se il problema continua, chiamaci.<br><br>
-      Telefono: <a href="tel:+393333367566" rel="nofollow noopener" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+      Telefono: <a class="tel-link" href="tel:${BAR_TEL}" data-tel="${BAR_TEL}" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `
   };
 
@@ -289,6 +340,9 @@
     box.classList.toggle('err', !!isError);
     document.getElementById('popupText').innerHTML = html;
     document.getElementById('popup').style.display = 'flex';
+
+    // ✅ bind tel links appena inseriti nel popup
+    wireTelLinks(document.getElementById('popupText'));
   }
 
   function closePopup(){
@@ -329,7 +383,6 @@
     elOra.value = ceilTo15(elOra.value);
   }
 
-  // desktop
   elOra.addEventListener('change', normalizeTimeField);
   elOra.addEventListener('blur', normalizeTimeField);
 
@@ -341,15 +394,14 @@
     return area === 'loft' ? 12 : 10;
   }
 
-  // ✅ ORARI: 18:00 -> 23:59 (00:00 NON è prenotabile online)
   function isWithinWorkingHours(time){
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
     if(Number.isNaN(h) || Number.isNaN(m)) return false;
 
     const minutes = h * 60 + m;
-    const OPEN = 18 * 60;          // 18:00
-    const CLOSE = 23 * 60 + 59;    // 23:59
+    const OPEN = 18 * 60;
+    const CLOSE = 23 * 60 + 59;
     return minutes >= OPEN && minutes <= CLOSE;
   }
 
@@ -373,7 +425,6 @@
     elBtn.disabled = true;
 
     try{
-      // ✅ SEMPRE (mobile-safe)
       normalizeTimeField();
 
       const nome = elNome.value.trim();
@@ -430,7 +481,6 @@
         false
       );
 
-      // ✅ reset SOLO dopo vero successo
       elForm.reset();
 
     } catch (err) {
