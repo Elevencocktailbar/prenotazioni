@@ -11,6 +11,9 @@
       --txt:#ffffff;
       --ok:#7ee787;
       --err:#ff7b72;
+
+      /* ✅ CONTROLLO TRASPARENZA SOLO DEL RIQUADRO FORM */
+      --card-bg: rgba(0,0,0,.30); /* più trasparente (prima era .55) */
     }
 
     html, body{
@@ -23,7 +26,7 @@
     .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
 
     .card{
-      background: rgba(0,0,0,.55);
+      background: var(--card-bg); /* ✅ SOLO QUESTA PARTE CAMBIA */
       border:1px solid rgba(255,255,255,.12);
       border-left:6px solid var(--gold);
       border-radius:18px;
@@ -282,13 +285,11 @@
   const popup = document.getElementById("popup");
   const btnClose = document.getElementById("popupCloseBtn");
 
-  // ✅ niente touchend con preventDefault: lasciamo al browser il comportamento “sicuro”
   btnClose.addEventListener("click", (e)=>{
     e.preventDefault();
     closePopup();
   });
 
-  // chiudi toccando fuori dal box
   popup.addEventListener("click", (e)=>{
     if(e.target === popup) closePopup();
   });
