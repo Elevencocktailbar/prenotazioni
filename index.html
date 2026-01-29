@@ -137,20 +137,6 @@
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
     }
-
-    /* ===== FIX: solo dropdown (menu aperto) ===== */
-    select option{
-      background-color:#000;
-      color:#fff;
-    }
-
-    /* ===== FIX: icone calendario e orologio bianche ===== */
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator{
-      filter: invert(1);
-      opacity: 1;
-      cursor: pointer;
-    }
   </style>
 </head>
 
@@ -371,10 +357,10 @@
 
       const nome = elNome.value.trim();
       const dataVal = elData.value;
-      const oraVal  = elOra.value;
-      const area    = elArea.value;
+      const oraVal = elOra.value;
+      const area = elArea.value;
       const personeN = parseInt(elPers.value || "0", 10);
-      const dataIT  = formatDateIT(dataVal);
+      const dataIT = formatDateIT(dataVal);
 
       if(!nome || !dataVal || !oraVal || !area || !personeN){
         openPopup(MESSAGES.MISSING_FIELDS, true);
@@ -426,7 +412,7 @@
     } finally {
       elBtn.disabled = false;
       if(success){
-        elForm.reset();
+        elForm.reset();   // ✅ reset SOLO se ok
       }
     }
   });
