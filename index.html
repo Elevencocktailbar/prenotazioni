@@ -137,6 +137,12 @@
     @media(max-width:640px){
       .grid{ grid-template-columns:1fr; }
     }
+
+    /* ===== FIX: solo dropdown (menu aperto) ===== */
+    select option{
+      background-color:#000;
+      color:#fff;
+    }
   </style>
 </head>
 
@@ -412,7 +418,7 @@
     } finally {
       elBtn.disabled = false;
       if(success){
-        elForm.reset();   // ✅ reset SOLO se ok
+        elForm.reset();
       }
     }
   });
