@@ -15,9 +15,6 @@
       /* ✅ BLUR ATTIVO */
       --card-bg: rgba(0,0,0,.10);
       --card-blur: 2px;
-
-      /* ✅ forza controlli nativi dark (icone chiare dove supportato) */
-      color-scheme: dark;
     }
 
     html, body{
@@ -150,8 +147,8 @@
     /* ===== FIX: icone calendario e orologio bianche ===== */
     input[type="date"]::-webkit-calendar-picker-indicator,
     input[type="time"]::-webkit-calendar-picker-indicator{
-      filter: invert(1) !important;
-      opacity: 1 !important;
+      filter: invert(1);
+      opacity: 1;
       cursor: pointer;
     }
   </style>
