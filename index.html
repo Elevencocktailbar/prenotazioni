@@ -175,6 +175,8 @@
           <label>Dove preferisci sederti? *</label>
           <select id="area" required>
             <option value="">Seleziona</option>
+            <option value="main">Piano principale</option>
+            <option value="loft">Soppalco</option>
           </select>
         </div>
 
@@ -320,86 +322,15 @@
     return yyyy_mm_dd ? yyyy_mm_dd.split('-').reverse().join('/') : '';
   }
 
-  // ====== CAPACITÀ DINAMICA (eventi / piani bloccati) ======
-  // Cache disponibilità ricevuta dal Worker: { areaId: { label, limit, remaining } }
-  let availabilityCache = {};
-  let isRebuilding = false;
-
-  function defaultLimitForArea(area){
+  function maxOnlineForArea(area){
     return area === 'loft' ? 12 : 10;
   }
 
-  // Limit "corrente" per l'area selezionata (override evento se presente)
-  function getCurrentLimitForArea(area){
-    return (availabilityCache[area] && Number.isFinite(availabilityCache[area].limit))
-      ? availabilityCache[area].limit
-      : defaultLimitForArea(area);
-  }
-
-  // Remaining "corrente" per l'area selezionata (se disponibile), altrimenti null
-  function getCurrentRemainingForArea(area){
-    return (availabilityCache[area] && Number.isFinite(availabilityCache[area].remaining))
-      ? availabilityCache[area].remaining
-      : null;
-  }
-
-  async function fetchAvailability(dateVal, oraVal, personeN){
-    const url = new URL(`${CLOUD_API_BASE}/api/availability`);
-    url.searchParams.set("data", dateVal);
-    url.searchParams.set("ora", oraVal);
-    url.searchParams.set("persone", String(personeN || 1));
-
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: { "X-Book-Key": PUBLIC_BOOK_KEY },
-    });
-
-    const data = await res.json().catch(()=> ({}));
-    if(!res.ok || !data || data.ok !== true) return null;
-    return data;
-  }
-
-  function rebuildAreaOptions(areas){
-    const prev = elArea.value;
-
-    elArea.innerHTML = '<option value="">Seleziona</option>';
-
-    for(const a of areas){
-      const opt = document.createElement("option");
-      opt.value = a.area;
-      opt.textContent = a.label;
-      elArea.appendChild(opt);
-    }
-
-    // ripristina selezione se ancora valida
-    if(prev && areas.some(a => a.area === prev)){
-      elArea.value = prev;
-    }else{
-      elArea.value = "";
-    }
-
-    // se c'è un solo piano disponibile, selezionalo automaticamente
-    if(!elArea.value && areas.length === 1){
-      elArea.value = areas[0].area;
-    }
-  }
-
-  // ✅ Opzioni persone in base al piano + disponibilità (limit/remaining) restituiti dal Worker
+  /* ✅ FIX: opzioni persone in base al piano (main max 10, loft max 12) */
   function rebuildPeopleOptions(){
-    isRebuilding = true
-  }
-
-  function rebuildPeopleOptions(){
-    const area = elArea.value;
-    const limit = getCurrentLimitForArea(area);
-    const remaining = getCurrentRemainingForArea(area);
-
-    // Se remaining è disponibile, mostriamo solo fino a remaining (evita scelte impossibili)
-    const maxN = (remaining !== null) ? Math.max(0, Math.min(limit, remaining)) : limit;
-
+    const maxN = maxOnlineForArea(elArea.value);
     const current = parseInt(elPers.value || "0", 10);
 
-    isRebuilding = true;
     elPers.innerHTML = '<option value="">Seleziona</option>';
 
     for(let i=1; i<=maxN; i++){
@@ -409,68 +340,14 @@
       elPers.appendChild(opt);
     }
 
-    if(current > 0 && maxN > 0){
+    if(current > 0){
       elPers.value = String(Math.min(current, maxN));
-    }else{
-      elPers.value = "";
-    }
-    isRebuilding = false;
-  }
-
-  async function refreshAvailability(){
-    const dataVal = elData.value;
-    const oraVal  = elOra.value;
-    if(!dataVal || !oraVal) return;
-
-    // people usato per filtrare i piani (se superi remaining, il piano sparisce)
-    const personeN = parseInt(elPers.value || "1", 10) || 1;
-
-    try{
-      const res = await fetchAvailability(dataVal, oraVal, personeN);
-      if(!res) return;
-
-      // Cache by area
-      availabilityCache = {};
-      for(const a of (res.areas || [])){
-        availabilityCache[a.area] = {
-          label: a.label,
-          limit: Number(a.limit),
-          remaining: Number(a.remaining),
-        };
-      }
-
-      const areas = (res.areas || []).map(a => ({
-        area: a.area,
-        label: a.label,
-        limit: a.limit,
-        remaining: a.remaining
-      }));
-
-      rebuildAreaOptions(areas);
-      availabilityCache = {}; rebuildPeopleOptions(); refreshAvailability();
-
-    } catch(_e){
-      // silenzioso: se availability fallisce, lasciamo i valori di default
     }
   }
 
-  // Aggiorna disponibilità quando cambiano data/ora/persone
-  elData.addEventListener('change', refreshAvailability);
-  elOra.addEventListener('change', ()=>{ normalizeTimeField(); refreshAvailability(); });
-  elOra.addEventListener('blur',  ()=>{ normalizeTimeField(); refreshAvailability(); });
-
-  elPers.addEventListener('change', ()=>{
-    if(isRebuilding) return;
-    refreshAvailability();
-  });
-
-  // Se l’utente cambia piano, ricostruisci subito le persone
-  elArea.addEventListener('change', ()=>{
-    rebuildPeopleOptions();
-  });
-
-  // Prima costruzione (default) + primo refresh quando si inseriscono data/ora
+  elArea.addEventListener('change', rebuildPeopleOptions);
   rebuildPeopleOptions();
+
   function isWithinWorkingHours(time){
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
@@ -519,7 +396,7 @@
         return;
       }
 
-      const maxN = getCurrentLimitForArea(area);
+      const maxN = maxOnlineForArea(area);
       if(personeN > maxN){
         openPopup(MESSAGES.TOO_LARGE, true);
         return;
@@ -560,9 +437,7 @@
       elBtn.disabled = false;
       if(success){
         elForm.reset();
-        availabilityCache = {};
         rebuildPeopleOptions();
-        refreshAvailability();
       }
     }
   });
