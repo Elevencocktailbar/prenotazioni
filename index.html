@@ -244,6 +244,9 @@
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
 
+  const optMain = elArea.querySelector('option[value="main"]');
+  const optLoft = elArea.querySelector('option[value="loft"]');
+
   const MESSAGES = {
     TRY_OTHER_AREA: `
       In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
@@ -376,6 +379,74 @@
     return { ok: res.ok, status: res.status, data };
   }
 
+  async function postAreaStatus(payload){
+    const url = `${CLOUD_API_BASE}/api/public/area-status`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Book-Key': PUBLIC_BOOK_KEY },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(()=> ({}));
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function setAreaVisible(area, visible){
+    const opt = area === 'loft' ? optLoft : optMain;
+    if(!opt) return;
+
+    opt.hidden = !visible;
+    opt.disabled = !visible;
+
+    if(!visible && elArea.value === area){
+      const other = area === 'main' ? 'loft' : 'main';
+      const otherOpt = other === 'loft' ? optLoft : optMain;
+      if(otherOpt && !otherOpt.hidden && !otherOpt.disabled){
+        elArea.value = other;
+      } else {
+        elArea.value = '';
+      }
+      rebuildPeopleOptions();
+    }
+  }
+
+  let areaCheckTimer = null;
+
+  async function updateAreasFromOverride(){
+    const dataVal = elData.value;
+    const oraVal = elOra.value;
+
+    if(!dataVal || !oraVal){
+      setAreaVisible('main', true);
+      setAreaVisible('loft', true);
+      return;
+    }
+
+    try{
+      const rMain = await postAreaStatus({ area:'main', data:dataVal, ora:oraVal });
+      const mainClosed = !!(rMain.data && rMain.data.code === 'AREA_CLOSED');
+
+      const rLoft = await postAreaStatus({ area:'loft', data:dataVal, ora:oraVal });
+      const loftClosed = !!(rLoft.data && rLoft.data.code === 'AREA_CLOSED');
+
+      setAreaVisible('main', !mainClosed);
+      setAreaVisible('loft', !loftClosed);
+    } catch (e) {
+      setAreaVisible('main', true);
+      setAreaVisible('loft', true);
+    }
+  }
+
+  function scheduleAreasUpdate(){
+    if(areaCheckTimer) clearTimeout(areaCheckTimer);
+    areaCheckTimer = setTimeout(updateAreasFromOverride, 150);
+  }
+
+  elData.addEventListener('change', scheduleAreasUpdate);
+  elOra.addEventListener('change', ()=>{ normalizeTimeField(); scheduleAreasUpdate(); });
+  elOra.addEventListener('blur', ()=>{ normalizeTimeField(); scheduleAreasUpdate(); });
+
+  scheduleAreasUpdate();
+
   elForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     elStatus.textContent = "";
@@ -447,6 +518,7 @@
       if(success){
         elForm.reset();
         rebuildPeopleOptions();
+        scheduleAreasUpdate();
       }
     }
   });
