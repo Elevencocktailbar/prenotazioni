@@ -174,7 +174,6 @@
         <div class="full">
           <label>Dove preferisci sederti? *</label>
           <select id="area" required>
-            <option value="">Seleziona</option>
             <option value="main">Piano principale</option>
             <option value="loft">Soppalco</option>
           </select>
@@ -356,6 +355,8 @@
   }
 
   elArea.addEventListener('change', rebuildPeopleOptions);
+
+  if(!elArea.value) elArea.value = 'main';
   rebuildPeopleOptions();
 
   function isWithinWorkingHours(time){
@@ -418,6 +419,8 @@
     if(!dataVal || !oraVal){
       setAreaVisible('main', true);
       setAreaVisible('loft', true);
+      if(!elArea.value) elArea.value = 'main';
+      rebuildPeopleOptions();
       return;
     }
 
@@ -430,9 +433,17 @@
 
       setAreaVisible('main', !mainClosed);
       setAreaVisible('loft', !loftClosed);
+
+      if(!elArea.value){
+        if(!optMain.hidden && !optMain.disabled) elArea.value = 'main';
+        else if(!optLoft.hidden && !optLoft.disabled) elArea.value = 'loft';
+      }
+      rebuildPeopleOptions();
     } catch (e) {
       setAreaVisible('main', true);
       setAreaVisible('loft', true);
+      if(!elArea.value) elArea.value = 'main';
+      rebuildPeopleOptions();
     }
   }
 
