@@ -259,13 +259,6 @@
       Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
       Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
-    AREA_CLOSED: `
-      In questo orario il piano selezionato non è prenotabile.<br>
-      Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
-      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
-      Se preferisci, puoi anche contattarci.<br><br>
-      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
-    `,
     OUT_OF_HOURS: `
       Le prenotazioni sono disponibili dalle <b>18:00</b> alle <b>23:59</b>.<br>
       Ti invitiamo a selezionare un orario compreso in questa fascia.
@@ -273,6 +266,13 @@
     TOO_LARGE: `
       Per gruppi numerosi preferiamo sentirci direttamente.<br>
       Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+    `,
+    AREA_CLOSED: `
+      In questo orario il piano selezionato non è prenotabile.<br>
+      Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
+      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
+      Se preferisci, puoi anche contattarci.<br><br>
       Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
     `,
     MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
@@ -376,59 +376,81 @@
     return { ok: res.ok, status: res.status, data };
   }
 
-  // ✅ NEW: prova a chiedere al worker quali aree sono prenotabili in quella fascia
-  // Non rompe nulla: se la rotta non esiste o fallisce, lascia tutto com'è.
-  async function fetchOpenAreas(dataVal, oraVal){
-    const url = `${CLOUD_API_BASE}/api/public/areas`;
+  elForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    elStatus.textContent = "";
+    elBtn.disabled = true;
+
+    let success = false;
+
     try{
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Book-Key': PUBLIC_BOOK_KEY },
-        body: JSON.stringify({ data: dataVal, ora: oraVal }),
-      });
-      if(!res.ok) return null;
-      const out = await res.json().catch(()=> null);
-      if(!out) return null;
+      normalizeTimeField();
 
-      // atteso: { ok:true, open_areas:["main","loft"], closed_areas:["main"], reason:{main:"AREA_CLOSED"} }
-      const open = Array.isArray(out.open_areas) ? out.open_areas.map(String) : null;
-      if(!open) return null;
+      const nome = elNome.value.trim();
+      const dataVal = elData.value;
+      const oraVal  = elOra.value;
+      const area    = elArea.value;
+      const personeN = parseInt(elPers.value || "0", 10);
+      const dataIT  = formatDateIT(dataVal);
 
-      return open;
-    } catch(e){
-      return null;
+      if(!nome || !dataVal || !oraVal || !area || !personeN){
+        openPopup(MESSAGES.MISSING_FIELDS, true);
+        return;
+      }
+
+      if(!isWithinWorkingHours(oraVal)){
+        openPopup(MESSAGES.OUT_OF_HOURS, true);
+        return;
+      }
+
+      const maxN = maxOnlineForArea(area);
+      if(personeN > maxN){
+        openPopup(MESSAGES.TOO_LARGE, true);
+        return;
+      }
+
+      const payload = {
+        area, nome, data: dataVal, ora: oraVal, persone: personeN,
+        telefono: elTel.value.trim(),
+        email: elMail.value.trim(),
+        note: elNote.value.trim(),
+      };
+
+      const { ok, data } = await postBooking(payload);
+
+      if(!ok || !data || data.ok !== true){
+        const code = (data && data.code) ? String(data.code) : "GENERIC";
+        if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
+        if(code === "FULL_ALL") return openPopup(MESSAGES.FULL_ALL, true);
+        if(code === "AREA_CLOSED") return openPopup(MESSAGES.AREA_CLOSED, true);
+        if(code === "TOO_LARGE") return openPopup(MESSAGES.TOO_LARGE, true);
+        return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
+      }
+
+      elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
+
+      openPopup(
+        `Ciao <b>${nome}</b>, ti confermiamo la tua prenotazione per <b>${personeN}</b> persone.<br>
+         Ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b>.<br><br>
+         Il tavolo viene riservato per <b>30 minuti</b> oltre l'orario di prenotazione.<br>
+         Dopo 30 minuti di ritardo il tavolo viene considerato libero per dare la possibilità ad altri ospiti di accomodarsi.<br><br>
+         Buona giornata,<br><b>Manuel</b>.`,
+        false
+      );
+
+      success = true;
+
+    } catch (err) {
+      openPopup(MESSAGES.GENERIC, true);
+    } finally {
+      elBtn.disabled = false;
+      if(success){
+        elForm.reset();
+        rebuildPeopleOptions();
+      }
     }
-  }
+  });
+</script>
 
-  function setAreaOptionVisible(value, visible){
-    const opt = elArea.querySelector(`option[value="${value}"]`);
-    if(!opt) return;
-    opt.style.display = visible ? '' : 'none';
-  }
-
-  async function refreshAreaVisibility(){
-    const dataVal = elData.value;
-    const oraVal  = elOra.value;
-
-    // default: mostra tutto
-    setAreaOptionVisible('main', true);
-    setAreaOptionVisible('loft', true);
-
-    if(!dataVal || !oraVal) return;
-
-    normalizeTimeField();
-
-    // se fuori orario, non ha senso interrogare
-    if(!isWithinWorkingHours(elOra.value)) return;
-
-    const openAreas = await fetchOpenAreas(dataVal, elOra.value);
-    if(!openAreas) return; // fallback: non cambiare nulla
-
-    const mainOpen = openAreas.includes('main');
-    const loftOpen = openAreas.includes('loft');
-
-    setAreaOptionVisible('main', mainOpen);
-    setAreaOptionVisible('loft', loftOpen);
-
-    // se l'area selezionata è diventata non disponibile, resetta su "Seleziona"
-    if(elArea.value === 'main' && !
+</body>
+</html>
