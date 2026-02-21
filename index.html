@@ -351,6 +351,46 @@
   elArea.value = 'main';
   rebuildPeopleOptions();
 
+  /* ✅ OVERRIDE: nascondi piani chiusi (capacity override = 0) */
+  async function checkAreaOpen(area, data, ora){
+    const res = await fetch(`${CLOUD_API_BASE}/api/public/area-status`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Book-Key": PUBLIC_BOOK_KEY },
+      body: JSON.stringify({ area, data, ora }),
+    });
+    const j = await res.json().catch(()=> ({}));
+    return !!(j && j.ok === true);
+  }
+
+  async function refreshAreaOptions(){
+    const data = elData.value;
+    const ora  = elOra.value;
+
+    if(!data || !ora) return;
+
+    const openMain = await checkAreaOpen("main", data, ora);
+    const openLoft = await checkAreaOpen("loft", data, ora);
+
+    const prev = elArea.value;
+
+    let html = "";
+    if(openMain) html += `<option value="main">Piano principale</option>`;
+    if(openLoft) html += `<option value="loft">Soppalco</option>`;
+    elArea.innerHTML = html;
+
+    if(Array.from(elArea.options).some(o => o.value === prev)){
+      elArea.value = prev;
+    }else if(elArea.options.length){
+      elArea.value = elArea.options[0].value;
+    }
+
+    rebuildPeopleOptions();
+  }
+
+  elData.addEventListener("change", refreshAreaOptions);
+  elOra.addEventListener("change", refreshAreaOptions);
+  refreshAreaOptions();
+
   function isWithinWorkingHours(time){
     if(!time || !time.includes(':')) return false;
     const [h, m] = time.split(':').map(Number);
