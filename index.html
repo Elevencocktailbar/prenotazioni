@@ -12,26 +12,28 @@
       --ok:#7ee787;
       --err:#ff7b72;
 
+      /* ✅ BLUR ATTIVO */
       --card-bg: rgba(0,0,0,.10);
       --card-blur: 2px;
     }
 
     html, body{
       margin:0;
-      background: transparent !important;
+      background: transparent !important; /* ✅ niente sfondo pagina */
       color: var(--txt);
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
     .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
 
+    /* ✅ Card senza “sfondo/overlay” esterno, blur resta */
     .card{
-      background: var(--card-bg);
+      background: var(--card-bg);                /* resta leggero, quasi invisibile */
       border:1px solid rgba(255,255,255,.12);
       border-left:6px solid var(--gold);
       border-radius:18px;
       padding:18px;
-      backdrop-filter: blur(var(--card-blur));
+      backdrop-filter: blur(var(--card-blur));   /* ✅ blur attivo */
       -webkit-backdrop-filter: blur(var(--card-blur));
     }
 
@@ -41,13 +43,14 @@
     .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     label{ font-size:13px; margin-bottom:6px; display:block; }
 
+    /* ✅ input senza sfondo pieno (niente overlay), blur resta a livello card */
     input, textarea, select{
       width:100%;
       min-height:48px;
       padding:12px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.25);
-      background: transparent;
+      background: transparent; /* ✅ tolto sfondo input */
       color:#fff;
       outline:none;
       appearance:none;
@@ -98,10 +101,11 @@
 
     .status{ font-size:13px; }
 
+    /* ===== POPUP ===== */
     .modal{
       position:fixed;
       inset:0;
-      background: transparent;
+      background: transparent; /* ✅ tolto overlay scuro */
       display:none;
       align-items:center;
       justify-content:center;
@@ -111,7 +115,7 @@
 
     .modal-box{
       width:min(520px, 100%);
-      background: rgba(0,0,0,.85);
+      background: rgba(0,0,0,.85); /* popup resta leggibile */
       border:1px solid rgba(255,255,255,.2);
       border-left:6px solid var(--gold);
       border-radius:16px;
@@ -134,6 +138,7 @@
       .grid{ grid-template-columns:1fr; }
     }
 
+    /* ===== FIX: solo dropdown (menu aperto) ===== */
     select option{
       background-color:#000;
       color:#fff;
@@ -214,28 +219,129 @@
   </div>
 </div>
 
-<!-- resto JS IDENTICO al tuo -->
+<!-- POPUP -->
+<div class="modal" id="popup" role="dialog" aria-modal="true">
+  <div class="modal-box" id="popupBox">
+    <div id="popupText"></div>
+    <button class="btn" type="button" id="popupCloseBtn">Chiudi</button>
+  </div>
+</div>
 
 <script>
   const CLOUD_API_BASE = "https://plain-feather-7cda.elevencocktailbar.workers.dev";
   const PUBLIC_BOOK_KEY = "pub_11cocktail_2026_1";
   const BAR_TEL = "+393333367566";
 
+  const elForm = document.getElementById('bookingForm');
+  const elNome = document.getElementById('nome');
+  const elData = document.getElementById('data');
+  const elOra  = document.getElementById('ora');
   const elArea = document.getElementById('area');
   const elPers = document.getElementById('persone');
+  const elTel  = document.getElementById('telefono');
+  const elMail = document.getElementById('email');
+  const elNote = document.getElementById('note');
+  const elStatus = document.getElementById('status');
+  const elBtn = document.getElementById('btnSubmit');
+
+  const MESSAGES = {
+    TRY_OTHER_AREA: `
+      In questo orario il piano selezionato non è disponibile per il numero di persone indicato.<br>
+      Puoi provare a selezionare l’altro piano oppure scegliere un orario diverso.<br>
+      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
+      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+    `,
+    FULL_ALL: `
+      In questo orario non abbiamo più disponibilità di tavoli per il numero di persone indicato.<br>
+      Ti consigliamo di provare a selezionare un orario diverso.<br>
+      Potrai comunque consumare al banco senza necessità di prenotazione.<br>
+      Se preferisci, puoi anche contattarci per verificare insieme la disponibilità.<br><br>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+    `,
+    OUT_OF_HOURS: `
+      Le prenotazioni sono disponibili dalle <b>18:00</b> alle <b>23:59</b>.<br>
+      Ti invitiamo a selezionare un orario compreso in questa fascia.
+    `,
+    TOO_LARGE: `
+      Per gruppi numerosi preferiamo sentirci direttamente.<br>
+      Chiamaci così possiamo organizzare al meglio tavoli e sedute in base allo spazio disponibile.<br><br>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+    `,
+    MISSING_FIELDS: `Compila tutti i campi obbligatori.`,
+    GENERIC: `
+      Errore durante l’invio. Riprova tra poco.<br>
+      Se il problema continua, chiamaci.<br><br>
+      Telefono: <a href="tel:${BAR_TEL}" target="_top" style="color:#fff;font-weight:900;text-decoration:none;">3333367566</a>
+    `
+  };
+
+  function openPopup(html, isError=false){
+    const box = document.getElementById('popupBox');
+    box.classList.toggle('err', !!isError);
+    document.getElementById('popupText').innerHTML = html;
+    document.getElementById('popup').style.display = 'flex';
+  }
+
+  function closePopup(){
+    const p = document.getElementById('popup');
+    if(p) p.style.display = 'none';
+  }
+
+  const popup = document.getElementById("popup");
+  const btnClose = document.getElementById("popupCloseBtn");
+
+  btnClose.addEventListener("click", (e)=>{
+    e.preventDefault();
+    closePopup();
+  });
+
+  popup.addEventListener("click", (e)=>{
+    if(e.target === popup) closePopup();
+  });
+
+  function ceilTo15(value){
+    if(!value || !value.includes(':')) return value;
+    let [h,m] = value.split(':').map(n => parseInt(n,10));
+    if(Number.isNaN(h) || Number.isNaN(m)) return value;
+    const total = h * 60 + m;
+    const rounded = Math.ceil(total / 15) * 15;
+    const hh = Math.floor((rounded % (24*60)) / 60);
+    const mm = (rounded % 60);
+    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  }
+
+  function normalizeTimeField(){
+    if(!elOra.value) return;
+    elOra.value = ceilTo15(elOra.value);
+  }
+  elOra.addEventListener('change', normalizeTimeField);
+  elOra.addEventListener('blur', normalizeTimeField);
+
+  function formatDateIT(yyyy_mm_dd){
+    return yyyy_mm_dd ? yyyy_mm_dd.split('-').reverse().join('/') : '';
+  }
 
   function maxOnlineForArea(area){
     return area === 'loft' ? 12 : 10;
   }
 
+  /* ✅ FIX: opzioni persone in base al piano (main max 10, loft max 12) */
   function rebuildPeopleOptions(){
     const maxN = maxOnlineForArea(elArea.value);
+    const current = parseInt(elPers.value || "0", 10);
+
     elPers.innerHTML = '<option value="">Seleziona</option>';
-    for(let i=1;i<=maxN;i++){
-      const opt=document.createElement('option');
-      opt.value=i;
-      opt.textContent=i;
+
+    for(let i=1; i<=maxN; i++){
+      const opt = document.createElement('option');
+      opt.value = String(i);
+      opt.textContent = String(i);
       elPers.appendChild(opt);
+    }
+
+    if(current > 0){
+      elPers.value = String(Math.min(current, maxN));
     }
   }
 
@@ -244,6 +350,100 @@
   /* ✅ default automatico */
   elArea.value = 'main';
   rebuildPeopleOptions();
+
+  function isWithinWorkingHours(time){
+    if(!time || !time.includes(':')) return false;
+    const [h, m] = time.split(':').map(Number);
+    if(Number.isNaN(h) || Number.isNaN(m)) return false;
+    const minutes = h * 60 + m;
+    const OPEN = 18 * 60;
+    const CLOSE = 23 * 60 + 59;
+    return minutes >= OPEN && minutes <= CLOSE;
+  }
+
+  async function postBooking(payload){
+    const url = `${CLOUD_API_BASE}/api/book`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Book-Key': PUBLIC_BOOK_KEY },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(()=> ({}));
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  elForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    elStatus.textContent = "";
+    elBtn.disabled = true;
+
+    let success = false;
+
+    try{
+      normalizeTimeField();
+
+      const nome = elNome.value.trim();
+      const dataVal = elData.value;
+      const oraVal  = elOra.value;
+      const area    = elArea.value;
+      const personeN = parseInt(elPers.value || "0", 10);
+      const dataIT  = formatDateIT(dataVal);
+
+      if(!nome || !dataVal || !oraVal || !area || !personeN){
+        openPopup(MESSAGES.MISSING_FIELDS, true);
+        return;
+      }
+
+      if(!isWithinWorkingHours(oraVal)){
+        openPopup(MESSAGES.OUT_OF_HOURS, true);
+        return;
+      }
+
+      const maxN = maxOnlineForArea(area);
+      if(personeN > maxN){
+        openPopup(MESSAGES.TOO_LARGE, true);
+        return;
+      }
+
+      const payload = {
+        area, nome, data: dataVal, ora: oraVal, persone: personeN,
+        telefono: elTel.value.trim(),
+        email: elMail.value.trim(),
+        note: elNote.value.trim(),
+      };
+
+      const { ok, data } = await postBooking(payload);
+
+      if(!ok || !data || data.ok !== true){
+        const code = (data && data.code) ? String(data.code) : "GENERIC";
+        if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
+        if(code === "FULL_ALL") return openPopup(MESSAGES.FULL_ALL, true);
+        return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
+      }
+
+      elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
+
+      openPopup(
+        `Ciao <b>${nome}</b>, ti confermiamo la tua prenotazione per <b>${personeN}</b> persone.<br>
+         Ti aspettiamo il <b>${dataIT}</b> alle <b>${oraVal}</b>.<br><br>
+         Il tavolo viene riservato per <b>30 minuti</b> oltre l'orario di prenotazione.<br>
+         Dopo 30 minuti di ritardo il tavolo viene considerato libero per dare la possibilità ad altri ospiti di accomodarsi.<br><br>
+         Buona giornata,<br><b>Manuel</b>.`,
+        false
+      );
+
+      success = true;
+
+    } catch (err) {
+      openPopup(MESSAGES.GENERIC, true);
+    } finally {
+      elBtn.disabled = false;
+      if(success){
+        elForm.reset();
+        rebuildPeopleOptions();
+      }
+    }
+  });
 </script>
 
 </body>
