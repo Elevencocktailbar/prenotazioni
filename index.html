@@ -171,10 +171,10 @@
           <input id="ora" type="time" step="900" required>
         </div>
 
-        <!-- ✅ MODIFICA: tolto "Seleziona" -->
         <div class="full">
           <label>Dove preferisci sederti? *</label>
           <select id="area" required>
+            <option value="">Seleziona</option>
             <option value="main">Piano principale</option>
             <option value="loft">Soppalco</option>
           </select>
@@ -346,6 +346,7 @@
   }
 
   elArea.addEventListener('change', rebuildPeopleOptions);
+  rebuildPeopleOptions();
 
   /* ✅ default automatico */
   elArea.value = 'main';
