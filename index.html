@@ -243,6 +243,12 @@
   const elNote = document.getElementById('note');
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
+  const params = new URLSearchParams(window.location.search);
+  const isAperitivo = params.get("mode") === "aperitivo";
+
+if (isAperitivo) {
+  elBtn.textContent = "Prenota e Paga";
+}
 
   const MESSAGES = {
     TRY_OTHER_AREA: `
