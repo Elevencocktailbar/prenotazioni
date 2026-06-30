@@ -241,11 +241,8 @@
   const elSubtitle = document.getElementById('formSubtitle');
 
   const params = new URLSearchParams(window.location.search);
-
-  // Modalità aperitivo attiva SOLO quando il cliente clicca GET STARTED dal popup.
-  // La prenotazione classica deve restare sempre normale.
-  const isAperitivo = false;
-  let aperitivoAttivo = false;
+  const isAperitivo = params.get("mode") === "aperitivo";
+  let aperitivoAttivo = isAperitivo;
 
   function activateAperitivoMode(){
     aperitivoAttivo = true;
@@ -253,6 +250,10 @@
     elTitle.textContent = "Prenota Aperitivo Eleven";
     elSubtitle.innerHTML = `Compila il modulo e premi <b>Procedi al pagamento</b>.<br>
       <span style="font-size:13px;opacity:.9;">Pacchetto aperitivo: <b>2 Cocktail Special + Tagliere a 20 €</b>.</span>`;
+  }
+
+  if (isAperitivo) {
+    activateAperitivoMode();
   }
 
   const MESSAGES = {
@@ -538,7 +539,9 @@
     }
   });
 
-  if (!aperitivoAttivo) {
+  const showAperitivoPopup = params.get("promo") === "aperitivo";
+
+  if (showAperitivoPopup && !aperitivoAttivo) {
     setTimeout(() => {
       openPopup(
         `Aperitivo Eleven<br><br>
