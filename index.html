@@ -539,41 +539,6 @@
     }
   });
 
-  const showAperitivoPopup = params.get("promo") === "aperitivo";
-
-  if (showAperitivoPopup && !aperitivoAttivo) {
-    setTimeout(() => {
-      openPopup(
-        `Aperitivo Eleven<br><br>
-         <b>2 Cocktail Special + Tagliere a 20 €</b><br><br>
-         <button class="btn" type="button" id="aperitivoStartBtn" style="
-           width:100%;
-           display:block;
-           box-sizing:border-box;
-           text-align:center;
-           padding:14px 16px;
-           border-radius:14px;
-           border:0;
-           background:#f6bf1a !important;
-           color:#000 !important;
-           font-weight:900;
-           font-size:16px;
-           text-decoration:none !important;
-         ">GET STARTED</button>`,
-        false
-      );
-
-      const btnAperitivo = document.getElementById("aperitivoStartBtn");
-      if (btnAperitivo) {
-        btnAperitivo.addEventListener("click", (e) => {
-          e.preventDefault();
-          activateAperitivoMode();
-          closePopup();
-          elForm.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-    }, 8000);
-  }
 
 </script>
 
