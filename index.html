@@ -411,6 +411,85 @@
     return minutes >= OPEN && minutes <= CLOSE;
   }
 
+  function isWithinAperitivoHours(time){
+    if(!time || !time.includes(':')) return false;
+    const [h, m] = time.split(':').map(Number);
+    if(Number.isNaN(h) || Number.isNaN(m)) return false;
+    const minutes = h * 60 + m;
+    const OPEN = 18 * 60;
+    const CLOSE = 21 * 60;
+    return minutes >= OPEN && minutes <= CLOSE;
+  }
+
+  function resetToBookingMode(){
+    aperitivoAttivo = false;
+    elBtn.textContent = "Conferma prenotazione";
+    elTitle.textContent = "Prenota un tavolo";
+    elSubtitle.innerHTML = `Compila il modulo e premi <b>Conferma prenotazione</b>.`;
+  }
+
+  function openAperitivoOutOfHoursPopup(){
+    openPopup(
+      `Formula Aperitivo Eleven<br><br>
+       Questo pacchetto non è disponibile per la fascia oraria selezionata.<br>
+       La formula Aperitivo Eleven è disponibile esclusivamente dalle <b>18:00</b> alle <b>21:00</b>.<br><br>
+       Puoi cambiare giorno/orario oppure andare alle prenotazioni classiche.<br><br>
+
+       <button class="btn" type="button" id="btnChangeAperitivoTime" style="
+         width:100%;
+         display:block;
+         box-sizing:border-box;
+         text-align:center;
+         padding:14px 16px;
+         border-radius:14px;
+         border:0;
+         background:#f6bf1a !important;
+         color:#000 !important;
+         font-weight:900;
+         font-size:16px;
+         text-decoration:none !important;
+         margin-top:10px;
+       ">Cambia giorno/orario</button>
+
+       <button class="btn" type="button" id="btnGoClassicBooking" style="
+         width:100%;
+         display:block;
+         box-sizing:border-box;
+         text-align:center;
+         padding:14px 16px;
+         border-radius:14px;
+         border:1px solid rgba(255,255,255,.35);
+         background:rgba(255,255,255,.12) !important;
+         color:#fff !important;
+         font-weight:900;
+         font-size:16px;
+         text-decoration:none !important;
+         margin-top:10px;
+       ">Vai a prenotazioni</button>`,
+      true
+    );
+
+    const btnChange = document.getElementById("btnChangeAperitivoTime");
+    if(btnChange){
+      btnChange.addEventListener("click", (e)=>{
+        e.preventDefault();
+        closePopup();
+        elForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+
+    const btnClassic = document.getElementById("btnGoClassicBooking");
+    if(btnClassic){
+      btnClassic.addEventListener("click", (e)=>{
+        e.preventDefault();
+        resetToBookingMode();
+        closePopup();
+        elStatus.textContent = "Sei passato alle prenotazioni classiche.";
+        elForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
   async function postBooking(payload){
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
@@ -457,6 +536,11 @@
 
       if(!isWithinWorkingHours(oraVal)){
         openPopup(MESSAGES.OUT_OF_HOURS, true);
+        return;
+      }
+
+      if(aperitivoAttivo && !isWithinAperitivoHours(oraVal)){
+        openAperitivoOutOfHoursPopup();
         return;
       }
 
