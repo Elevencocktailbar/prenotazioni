@@ -242,12 +242,18 @@
 
   const params = new URLSearchParams(window.location.search);
   const isAperitivo = params.get("mode") === "aperitivo";
+  let aperitivoAttivo = isAperitivo;
 
-  if (isAperitivo) {
+  function activateAperitivoMode(){
+    aperitivoAttivo = true;
     elBtn.textContent = "Procedi al pagamento";
     elTitle.textContent = "Prenota Aperitivo Eleven";
-    elSubtitle.innerHTML = `Compila il modulo e premi <b>Prenota e Paga</b>.<br>
+    elSubtitle.innerHTML = `Compila il modulo e premi <b>Procedi al pagamento</b>.<br>
       <span style="font-size:13px;opacity:.9;">Pacchetto aperitivo: <b>2 Cocktail Special + Tagliere a 20 €</b>.</span>`;
+  }
+
+  if (isAperitivo) {
+    activateAperitivoMode();
   }
 
   const MESSAGES = {
@@ -467,7 +473,7 @@
         note: elNote.value.trim(),
       };
 
-      const result = isAperitivo
+      const result = aperitivoAttivo
         ? await postAperitivoCheckout(payload)
         : await postBooking(payload);
 
@@ -481,7 +487,7 @@
         return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
       }
 
-      if(isAperitivo){
+      if(aperitivoAttivo){
         if(data.checkout_url){
           openPopup(
             `Disponibilità confermata.<br><br>
@@ -533,13 +539,12 @@
     }
   });
 
-  /* Popup automatico Aperitivo Eleven */
-  if (!isAperitivo) {
+  if (!aperitivoAttivo) {
     setTimeout(() => {
       openPopup(
         `Aperitivo Eleven<br><br>
          <b>2 Cocktail Special + Tagliere a 20 €</b><br><br>
-         <a href="?mode=aperitivo" style="
+         <button class="btn" type="button" id="aperitivoStartBtn" style="
            width:100%;
            display:block;
            box-sizing:border-box;
@@ -552,9 +557,19 @@
            font-weight:900;
            font-size:16px;
            text-decoration:none !important;
-         ">Vai al pagamento</a>`,
+         ">GET STARTED</button>`,
         false
       );
+
+      const btnAperitivo = document.getElementById("aperitivoStartBtn");
+      if (btnAperitivo) {
+        btnAperitivo.addEventListener("click", (e) => {
+          e.preventDefault();
+          activateAperitivoMode();
+          closePopup();
+          elForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
     }, 8000);
   }
 
