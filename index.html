@@ -487,18 +487,15 @@
         return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
       }
 
-      if(isAperitivo){
-        openPopup(
-          `Disponibilità confermata per <b>${nome}</b>.<br><br>
-           Persone: <b>${personeN}</b><br>
-           Pacchetti aperitivo: <b>${data.pacchetti}</b><br>
-           Totale: <b>€${data.amount_eur}</b><br><br>
-           <b>TEST OK:</b> per ora nessuna prenotazione è stata salvata e nessun pagamento è partito.`,
-          false
-        );
-        success = false;
-        return;
-      }
+     if(isAperitivo){
+  if(data.checkout_url){
+    window.location.href = data.checkout_url;
+    return;
+  }
+
+  openPopup(MESSAGES.GENERIC, true);
+  return;
+}
 
       elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
 
