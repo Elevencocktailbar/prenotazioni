@@ -409,6 +409,27 @@ if (isAperitivo) {
   }
 
   async function postBooking(payload){
+    async function postAperitivoCheckout(payload){
+  const url = `${CLOUD_API_BASE}/api/aperitivo/create-checkout`;
+
+  const res = await fetch(url,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Book-Key":PUBLIC_BOOK_KEY
+    },
+    body:JSON.stringify(payload)
+  });
+
+  const data = await res.json().catch(()=> ({}));
+
+  return {
+    ok:res.ok,
+    status:res.status,
+    data
+  };
+}
+    
     const url = `${CLOUD_API_BASE}/api/book`;
     const res = await fetch(url, {
       method: 'POST',
