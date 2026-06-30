@@ -487,16 +487,6 @@
         return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
       }
 
-     if(isAperitivo){
-  if(data.checkout_url){
-    window.top.location.href = data.checkout_url;
-    return;
-  }
-
-  openPopup(MESSAGES.GENERIC, true);
-  return;
-}
-
       if(isAperitivo){
   if(data.checkout_url){
     openPopup(
