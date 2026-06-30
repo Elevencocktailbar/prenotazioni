@@ -161,18 +161,17 @@
         </div>
 
         <div>
-          <label>Orario (solo ogni 15 min) *</label>
+          <label>Orario *</label>
           <select id="ora" required>
-  <option value="">Seleziona</option>
-</select>
+            <option value="">Seleziona</option>
+          </select>
         </div>
 
         <div class="full">
           <label>Dove preferisci sederti? *</label>
           <select id="area" required>
-            <option value="">Seleziona</option>
-            <option value="main">Piano principale</option>
-            <option value="loft">Soppalco</option>
+            <option value="main">Piano principale - max 10 persone</option>
+            <option value="loft">Soppalco - max 12 persone</option>
           </select>
         </div>
 
@@ -307,32 +306,14 @@
     if(e.target === popup) closePopup();
   });
 
-  function ceilTo15(value){
-    if(!value || !value.includes(':')) return value;
-    let [h,m] = value.split(':').map(n => parseInt(n,10));
-    if(Number.isNaN(h) || Number.isNaN(m)) return value;
-    const total = h * 60 + m;
-    const rounded = Math.ceil(total / 15) * 15;
-    const hh = Math.floor((rounded % (24*60)) / 60);
-    const mm = (rounded % 60);
-    return String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
-  }
-
-  function normalizeTimeField(){
-    if(!elOra.value) return;
-    elOra.value = ceilTo15(elOra.value);
-  }
-  elOra.addEventListener('change', normalizeTimeField);
-  elOra.addEventListener('blur', normalizeTimeField);
-
   function formatDateIT(yyyy_mm_dd){
     return yyyy_mm_dd ? yyyy_mm_dd.split('-').reverse().join('/') : '';
   }
 
   function maxOnlineForArea(area){
-  const a = String(area || 'main').trim();
-  if(a === 'loft') return 12;
-  return 10;
+    const a = String(area || 'main').trim();
+    if(a === 'loft') return 12;
+    return 10;
   }
 
   function rebuildPeopleOptions(){
@@ -353,14 +334,32 @@
     }
   }
 
-  /* ✅ default automatico */
-elArea.value = 'main';
+  function rebuildTimeOptions(){
+    elOra.innerHTML = '<option value="">Seleziona</option>';
 
-elArea.addEventListener('change', rebuildPeopleOptions);
-elArea.addEventListener('input', rebuildPeopleOptions);
-elPers.addEventListener('focus', rebuildPeopleOptions);
+    const start = 18 * 60;
+    const end = 23 * 60 + 45;
 
-rebuildPeopleOptions();
+    for(let mins = start; mins <= end; mins += 15){
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      const value = String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = value;
+      elOra.appendChild(opt);
+    }
+  }
+
+  elArea.value = 'main';
+
+  elArea.addEventListener('change', rebuildPeopleOptions);
+  elArea.addEventListener('input', rebuildPeopleOptions);
+  elPers.addEventListener('focus', rebuildPeopleOptions);
+
+  rebuildTimeOptions();
+  rebuildPeopleOptions();
 
   async function checkAreaOpen(area, data, ora){
     const res = await fetch(`${CLOUD_API_BASE}/api/public/area-status`, {
@@ -384,8 +383,13 @@ rebuildPeopleOptions();
     const prev = elArea.value;
 
     let html = "";
-    if(openMain) html += `<option value="main">Piano principale</option>`;
-    if(openLoft) html += `<option value="loft">Soppalco</option>`;
+    if(openMain) html += `<option value="main">Piano principale - max 10 persone</option>`;
+    if(openLoft) html += `<option value="loft">Soppalco - max 12 persone</option>`;
+
+    if(!html){
+      html = `<option value="">Nessun piano disponibile</option>`;
+    }
+
     elArea.innerHTML = html;
 
     if(Array.from(elArea.options).some(o => o.value === prev)){
@@ -441,16 +445,16 @@ rebuildPeopleOptions();
     let success = false;
 
     try{
-      normalizeTimeField();
-
       const nome = elNome.value.trim();
       const dataVal = elData.value;
       const oraVal  = elOra.value;
       const area    = elArea.value;
       const personeN = parseInt(elPers.value || "0", 10);
+      const telefono = elTel.value.trim();
+      const email = elMail.value.trim();
       const dataIT  = formatDateIT(dataVal);
 
-      if(!nome || !dataVal || !oraVal || !area || !personeN){
+      if(!nome || !dataVal || !oraVal || !area || !personeN || !telefono || !email){
         openPopup(MESSAGES.MISSING_FIELDS, true);
         return;
       }
@@ -468,8 +472,8 @@ rebuildPeopleOptions();
 
       const payload = {
         area, nome, data: dataVal, ora: oraVal, persone: personeN,
-        telefono: elTel.value.trim(),
-        email: elMail.value.trim(),
+        telefono: telefono,
+        email: email,
         note: elNote.value.trim(),
       };
 
@@ -532,6 +536,8 @@ rebuildPeopleOptions();
       elBtn.disabled = false;
       if(success){
         elForm.reset();
+        elArea.value = 'main';
+        rebuildTimeOptions();
         rebuildPeopleOptions();
       }
     }
