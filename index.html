@@ -12,28 +12,26 @@
       --ok:#7ee787;
       --err:#ff7b72;
 
-      /* ✅ BLUR ATTIVO */
       --card-bg: rgba(0,0,0,.10);
       --card-blur: 2px;
     }
 
     html, body{
       margin:0;
-      background: transparent !important; /* ✅ niente sfondo pagina */
+      background: transparent !important;
       color: var(--txt);
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
     .wrap{ max-width:720px; margin:0 auto; padding:24px; background: transparent; }
 
-    /* ✅ Card senza “sfondo/overlay” esterno, blur resta */
     .card{
-      background: var(--card-bg);                /* resta leggero, quasi invisibile */
+      background: var(--card-bg);
       border:1px solid rgba(255,255,255,.12);
       border-left:6px solid var(--gold);
       border-radius:18px;
       padding:18px;
-      backdrop-filter: blur(var(--card-blur));   /* ✅ blur attivo */
+      backdrop-filter: blur(var(--card-blur));
       -webkit-backdrop-filter: blur(var(--card-blur));
     }
 
@@ -43,14 +41,13 @@
     .grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     label{ font-size:13px; margin-bottom:6px; display:block; }
 
-    /* ✅ input senza sfondo pieno (niente overlay), blur resta a livello card */
     input, textarea, select{
       width:100%;
       min-height:48px;
       padding:12px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.25);
-      background: transparent; /* ✅ tolto sfondo input */
+      background: transparent;
       color:#fff;
       outline:none;
       appearance:none;
@@ -101,11 +98,10 @@
 
     .status{ font-size:13px; }
 
-    /* ===== POPUP ===== */
     .modal{
       position:fixed;
       inset:0;
-      background: transparent; /* ✅ tolto overlay scuro */
+      background: transparent;
       display:none;
       align-items:center;
       justify-content:center;
@@ -115,7 +111,7 @@
 
     .modal-box{
       width:min(520px, 100%);
-      background: rgba(0,0,0,.85); /* popup resta leggibile */
+      background: rgba(0,0,0,.85);
       border:1px solid rgba(255,255,255,.2);
       border-left:6px solid var(--gold);
       border-radius:16px;
@@ -138,7 +134,6 @@
       .grid{ grid-template-columns:1fr; }
     }
 
-    /* ===== FIX: solo dropdown (menu aperto) ===== */
     select option{
       background-color:#000;
       color:#fff;
@@ -150,8 +145,8 @@
 
 <div class="wrap">
   <div class="card">
-    <h1>Prenota un tavolo</h1>
-    <p>Compila il modulo e premi <b>Conferma prenotazione</b>.</p>
+    <h1 id="formTitle">Prenota un tavolo</h1>
+    <p id="formSubtitle">Compila il modulo e premi <b>Conferma prenotazione</b>.</p>
 
     <form id="bookingForm" novalidate>
       <div class="grid">
@@ -219,7 +214,6 @@
   </div>
 </div>
 
-<!-- POPUP -->
 <div class="modal" id="popup" role="dialog" aria-modal="true">
   <div class="modal-box" id="popupBox">
     <div id="popupText"></div>
@@ -243,6 +237,18 @@
   const elNote = document.getElementById('note');
   const elStatus = document.getElementById('status');
   const elBtn = document.getElementById('btnSubmit');
+  const elTitle = document.getElementById('formTitle');
+  const elSubtitle = document.getElementById('formSubtitle');
+
+  const params = new URLSearchParams(window.location.search);
+  const isAperitivo = params.get("mode") === "aperitivo";
+
+  if (isAperitivo) {
+    elBtn.textContent = "Prenota e Paga";
+    elTitle.textContent = "Prenota Aperitivo Eleven";
+    elSubtitle.innerHTML = `Compila il modulo e premi <b>Prenota e Paga</b>.<br>
+      <span style="font-size:13px;opacity:.9;">Pacchetto aperitivo: <b>2 Cocktail Special + Tagliere a 20 €</b>.</span>`;
+  }
 
   const MESSAGES = {
     TRY_OTHER_AREA: `
@@ -326,7 +332,6 @@
     return area === 'loft' ? 12 : 10;
   }
 
-  /* ✅ FIX: opzioni persone in base al piano (main max 10, loft max 12) */
   function rebuildPeopleOptions(){
     const maxN = maxOnlineForArea(elArea.value);
     const current = parseInt(elPers.value || "0", 10);
@@ -348,11 +353,9 @@
   elArea.addEventListener('change', rebuildPeopleOptions);
   rebuildPeopleOptions();
 
-  /* ✅ default automatico */
   elArea.value = 'main';
   rebuildPeopleOptions();
 
-  /* ✅ OVERRIDE: nascondi piani chiusi (capacity override = 0) */
   async function checkAreaOpen(area, data, ora){
     const res = await fetch(`${CLOUD_API_BASE}/api/public/area-status`, {
       method: "POST",
@@ -413,6 +416,17 @@
     return { ok: res.ok, status: res.status, data };
   }
 
+  async function postAperitivoCheckout(payload){
+    const url = `${CLOUD_API_BASE}/api/aperitivo/create-checkout`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Book-Key': PUBLIC_BOOK_KEY },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(()=> ({}));
+    return { ok: res.ok, status: res.status, data };
+  }
+
   elForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     elStatus.textContent = "";
@@ -453,13 +467,46 @@
         note: elNote.value.trim(),
       };
 
-      const { ok, data } = await postBooking(payload);
+      const result = isAperitivo
+        ? await postAperitivoCheckout(payload)
+        : await postBooking(payload);
+
+      const ok = result.ok;
+      const data = result.data;
 
       if(!ok || !data || data.ok !== true){
         const code = (data && data.code) ? String(data.code) : "GENERIC";
         if(code === "TRY_OTHER_AREA") return openPopup(MESSAGES.TRY_OTHER_AREA, true);
         if(code === "FULL_ALL") return openPopup(MESSAGES.FULL_ALL, true);
         return openPopup(MESSAGES[code] || MESSAGES.GENERIC, true);
+      }
+
+      if(isAperitivo){
+        if(data.checkout_url){
+          openPopup(
+            `Disponibilità confermata.<br><br>
+             Per completare la prenotazione devi procedere al pagamento online.<br><br>
+             <a href="${data.checkout_url}" target="_blank" rel="noopener noreferrer" style="
+               width:100%;
+               display:block;
+               box-sizing:border-box;
+               text-align:center;
+               padding:14px 16px;
+               border-radius:14px;
+               border:0;
+               background:#f6bf1a !important;
+               color:#000 !important;
+               font-weight:900;
+               font-size:16px;
+               text-decoration:none !important;
+             ">Vai al pagamento</a>`,
+            false
+          );
+          return;
+        }
+
+        openPopup(MESSAGES.GENERIC, true);
+        return;
       }
 
       elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
@@ -485,6 +532,34 @@
       }
     }
   });
+
+  if (!isAperitivo) {
+    setTimeout(() => {
+      const aperitivoUrl = new URL(window.location.href);
+      aperitivoUrl.searchParams.set("mode", "aperitivo");
+
+      openPopup(
+        `Aperitivo Eleven<br><br>
+         <b>2 Cocktail Special + Tagliere a 20 €</b><br><br>
+         <a href="${aperitivoUrl.toString()}" target="_top" style="
+           width:100%;
+           display:block;
+           box-sizing:border-box;
+           text-align:center;
+           padding:14px 16px;
+           border-radius:14px;
+           border:0;
+           background:#f6bf1a !important;
+           color:#000 !important;
+           font-weight:900;
+           font-size:16px;
+           text-decoration:none !important;
+         ">GET STARTED</a>`,
+        false
+      );
+    }, 8000);
+  }
+
 </script>
 
 </body>
