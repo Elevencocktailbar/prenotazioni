@@ -244,7 +244,7 @@
   const isAperitivo = params.get("mode") === "aperitivo";
 
   if (isAperitivo) {
-    elBtn.textContent = "Prenota e Paga";
+    elBtn.textContent = "Procedi al pagamento";
     elTitle.textContent = "Prenota Aperitivo Eleven";
     elSubtitle.innerHTML = `Compila il modulo e premi <b>Prenota e Paga</b>.<br>
       <span style="font-size:13px;opacity:.9;">Pacchetto aperitivo: <b>2 Cocktail Special + Tagliere a 20 €</b>.</span>`;
@@ -533,15 +533,13 @@
     }
   });
 
+  /* Popup automatico Aperitivo Eleven */
   if (!isAperitivo) {
     setTimeout(() => {
-      const aperitivoUrl = new URL(window.location.href);
-      aperitivoUrl.searchParams.set("mode", "aperitivo");
-
       openPopup(
         `Aperitivo Eleven<br><br>
          <b>2 Cocktail Special + Tagliere a 20 €</b><br><br>
-         <a href="${aperitivoUrl.toString()}" target="_top" style="
+         <a href="?mode=aperitivo" style="
            width:100%;
            display:block;
            box-sizing:border-box;
