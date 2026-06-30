@@ -492,19 +492,20 @@
     openPopup(
       `Disponibilità confermata.<br><br>
        Per completare la prenotazione devi procedere al pagamento online.<br><br>
-       <button type="button" onclick="window.open('${data.checkout_url}','_blank')" style="
-         width:100%;
-         display:block;
-         text-align:center;
-         padding:14px 16px;
-         border-radius:14px;
-         border:0;
-         background:#f6bf1a;
-         color:#000;
-         font-weight:900;
-         font-size:16px;
-         cursor:pointer;
-       ">Vai al pagamento</button>`,
+       <a href="${data.checkout_url}" target="_blank" rel="noopener noreferrer" style="
+  width:100%;
+  display:block;
+  box-sizing:border-box;
+  text-align:center;
+  padding:14px 16px;
+  border-radius:14px;
+  border:0;
+  background:#f6bf1a !important;
+  color:#000 !important;
+  font-weight:900;
+  font-size:16px;
+  text-decoration:none !important;
+">Vai al pagamento</a>
       false
     );
 
