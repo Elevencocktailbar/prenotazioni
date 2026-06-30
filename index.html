@@ -497,6 +497,31 @@
   return;
 }
 
+      if(isAperitivo){
+  if(data.checkout_url){
+    openPopup(
+      `Disponibilità confermata.<br><br>
+       Per completare la prenotazione devi procedere al pagamento online.<br><br>
+       <a href="${data.checkout_url}" target="_top" style="
+         display:block;
+         text-align:center;
+         padding:14px 16px;
+         border-radius:14px;
+         background:#f6bf1a;
+         color:#000;
+         font-weight:900;
+         text-decoration:none;
+       ">Vai al pagamento</a>`,
+      false
+    );
+
+    return;
+  }
+
+  openPopup(MESSAGES.GENERIC, true);
+  return;
+}
+      
       elStatus.textContent = "Prenotazione inviata correttamente. Riceverai la conferma a breve.";
 
       openPopup(
