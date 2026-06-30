@@ -480,7 +480,9 @@ if (isAperitivo) {
         note: elNote.value.trim(),
       };
 
-      const { ok, data } = await postBooking(payload);
+      const { ok, data } = isAperitivo
+  ? await postAperitivoCheckout(payload)
+  : await postBooking(payload);
 
       if(!ok || !data || data.ok !== true){
         const code = (data && data.code) ? String(data.code) : "GENERIC";
