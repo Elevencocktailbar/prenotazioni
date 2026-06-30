@@ -482,10 +482,12 @@
     if(btnClassic){
       btnClassic.addEventListener("click", (e)=>{
         e.preventDefault();
-        resetToBookingMode();
-        closePopup();
-        elStatus.textContent = "Sei passato alle prenotazioni classiche.";
-        elForm.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("mode");
+        url.searchParams.set("v", Date.now());
+
+        window.location.replace(url.toString());
       });
     }
   }
