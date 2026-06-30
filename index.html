@@ -328,7 +328,9 @@
   }
 
   function maxOnlineForArea(area){
-    return area === 'loft' ? 12 : 10;
+  const a = String(area || 'main').trim();
+  if(a === 'loft') return 12;
+  return 10;
   }
 
   function rebuildPeopleOptions(){
@@ -349,11 +351,14 @@
     }
   }
 
-  elArea.addEventListener('change', rebuildPeopleOptions);
-  rebuildPeopleOptions();
+  /* ✅ default automatico */
+elArea.value = 'main';
 
-  elArea.value = 'main';
-  rebuildPeopleOptions();
+elArea.addEventListener('change', rebuildPeopleOptions);
+elArea.addEventListener('input', rebuildPeopleOptions);
+elPers.addEventListener('focus', rebuildPeopleOptions);
+
+rebuildPeopleOptions();
 
   async function checkAreaOpen(area, data, ora){
     const res = await fetch(`${CLOUD_API_BASE}/api/public/area-status`, {
